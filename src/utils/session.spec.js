@@ -21,6 +21,28 @@ it('should_restore_valid_session_and_preserve_user_id', () => {
   clearSession(sessionStorage)
   expect(readSession(sessionStorage)).toBeNull()
 })
+it.each(['USER', 'ADMIN'])(
+  'should_persist_and_restore_%s_session_without_bound_email',
+  (role) => {
+    const value = authentication(role)
+    value.user.email = null
+    expect(isValidSession(value)).toBe(true)
+    writeSession(sessionStorage, value)
+    expect(readSession(sessionStorage)).toEqual(value)
+    expect(readSession(sessionStorage).user.email).toBeNull()
+  },
+)
+it.each([
+  { name: 'missing', email: undefined },
+  { name: 'number', email: 42 },
+  { name: 'boolean', email: false },
+  { name: 'object', email: {} },
+  { name: 'array', email: [] },
+])('should_reject_$name_email_in_session', ({ email }) => {
+  const value = authentication()
+  value.user.email = email
+  expect(isValidSession(value)).toBe(false)
+})
 it.each(['bad json', '{}', 'null'])(
   'should_discard_corrupt_storage_%s',
   (raw) => {

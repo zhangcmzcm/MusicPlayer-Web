@@ -25,7 +25,7 @@ export function isValidSession(value, now = Date.now()) {
     String(user.id).length &&
     typeof user.username === 'string' &&
     user.username.length &&
-    typeof user.email === 'string' &&
+    (user.email === null || typeof user.email === 'string') &&
     ['USER', 'ADMIN'].includes(user.role),
   )
 }

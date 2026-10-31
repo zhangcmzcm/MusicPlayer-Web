@@ -349,3 +349,41 @@ test('should_display_404_for_unknown_page', async ({ page }) => {
   await page.getByTestId('back-to-login').click()
   await expect(page.getByTestId('email-input')).toBeVisible()
 })
+
+for (const role of ['USER', 'ADMIN']) {
+  test(`should_select_${role}_and_restore_session_without_bound_email`, async ({
+    page,
+  }) => {
+    const requests = []
+    await mockApi(page, (request) => {
+      const payload = request.postDataJSON()
+      requests.push(payload)
+      if (payload.loginType !== 'ROLE_SELECTION') return { body: selection() }
+      const body = authenticated(role)
+      body.authentication.user.email = null
+      return { body }
+    })
+    await page.goto('/login')
+    await page.getByTestId('other-methods').click()
+    await page.getByTestId('method-USERNAME_PASSWORD').click()
+    await page.getByTestId('username-input').fill('listener')
+    await page.getByTestId('password-input').fill('sample-password')
+    await page.getByTestId('login-submit').click()
+    await page.getByTestId(`role-${role}`).click()
+    await expect(page.getByTestId('session-role')).toHaveText(
+      `本次身份：${role === 'ADMIN' ? '管理员' : '用户'}`,
+    )
+    await expect(page.getByTestId('login-error')).toHaveCount(0)
+    expect(requests[1]).toEqual({
+      loginType: 'ROLE_SELECTION',
+      loginTicket: 'e2e-selection-ticket',
+      loginRole: role,
+    })
+    await page.reload()
+    await expect(page.getByTestId('login-success')).toBeVisible()
+    await expect(page.getByTestId('session-role')).toHaveText(
+      `本次身份：${role === 'ADMIN' ? '管理员' : '用户'}`,
+    )
+    expect(requests).toHaveLength(2)
+  })
+}
