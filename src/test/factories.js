@@ -1,6 +1,8 @@
 export function authentication(role = 'USER') {
   return {
-    accessToken: 'test-session-token',
+    // 仅用于形态测试；签名为固定伪值，不能用于真实后端认证。
+    accessToken:
+      'eyJhbGciOiJIUzI1NiJ9.eyJmaXh0dXJlIjp0cnVlfQ.c3ludGhldGljLXNpZ25hdHVyZQ',
     tokenType: 'Bearer',
     expiresAt: new Date(Date.now() + 3600000).toISOString(),
     user: {

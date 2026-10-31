@@ -7,6 +7,8 @@ import { useLogin } from './useLogin.js'
 import * as api from '../api/auth.js'
 import { authenticated, deferred, ticket } from '../test/factories.js'
 import { ApiError } from '../utils/errors.js'
+import ElementPlus from 'element-plus'
+import LoginForm from '../components/auth/LoginForm.vue'
 
 vi.mock('../api/auth.js', () => ({ login: vi.fn(), sendLoginCode: vi.fn() }))
 beforeEach(() => {
@@ -82,7 +84,7 @@ it('should_keep_email_cooldown_across_switches_and_clock_jumps', async () => {
   await vi.advanceTimersByTimeAsync(500)
   expect(flow.sendRemaining.value).toBe(0)
 })
-it.each(['IP_RATE_LIMIT', 'EMAIL_COOLDOWN', 'EMAIL_DAILY_LIMIT'])(
+it.each(['IP_RATE_LIMIT', 'EMAIL_COOLDOWN', 'EMAIL_DAILY_LIMIT', null])(
   'should_respect_send_limit_%s',
   async (scope) => {
     vi.useFakeTimers()
@@ -100,7 +102,9 @@ it.each(['IP_RATE_LIMIT', 'EMAIL_COOLDOWN', 'EMAIL_DAILY_LIMIT'])(
     await flow.sendCode(valid)
     expect(flow.sendRemaining.value).toBe(120)
     flow.form.email = 'b@example.test'
-    expect(flow.sendRemaining.value).toBe(scope === 'IP_RATE_LIMIT' ? 120 : 0)
+    expect(flow.sendRemaining.value).toBe(
+      ['EMAIL_COOLDOWN', 'EMAIL_DAILY_LIMIT'].includes(scope) ? 0 : 120,
+    )
   },
 )
 it('should_ignore_send_result_after_unmount', async () => {
@@ -133,3 +137,73 @@ it('should_expire_ticket_and_surface_authentication_limits', async () => {
   await flow.submit(valid)
   expect(flow.loginRemaining.value).toBe(30)
 })
+
+const boundaryCases = [
+  ...[119, 120, 121].map((length) => ({
+    field: 'email',
+    value: 'a'.repeat(63) + '@' + 'b'.repeat(length - 69) + '.test',
+    accepted: length <= 120,
+    method: 'EMAIL_PASSWORD',
+    name: `email_${length}`,
+  })),
+  ...[2, 3, 80, 81].map((length) => ({
+    field: 'username',
+    value: 'u'.repeat(length),
+    accepted: length >= 3 && length <= 80,
+    method: 'USERNAME_PASSWORD',
+    name: `username_${length}`,
+  })),
+  ...[7, 8, 128, 129].map((length) => ({
+    field: 'password',
+    value: 'p'.repeat(length),
+    accepted: length >= 8 && length <= 128,
+    method: 'EMAIL_PASSWORD',
+    name: `password_${length}`,
+  })),
+  ...['01234', '012345', '0123456', '12345x', '１２３４５６'].map((value) => ({
+    field: 'code',
+    value,
+    accepted: value === '012345',
+    method: 'EMAIL_CODE',
+    name: `code_${value}`,
+  })),
+]
+
+it.each(boundaryCases)(
+  'should_apply_contract_boundary_$name',
+  async ({ field, value, method, accepted }) => {
+    const { flow } = setup()
+    flow.changeMethod(method)
+    Object.assign(flow.form, {
+      email: 'listener@example.test',
+      username: 'listener',
+      password: 'sample-password',
+      code: '012345',
+    })
+    flow.form[field] = value
+    const form = mount(LoginForm, {
+      props: { modelValue: flow.form, loginType: method, rules: flow.rules },
+      global: { plugins: [ElementPlus] },
+    })
+    await flushPromises()
+    expect(await form.vm.$.exposed.validate()).toBe(accepted)
+    if (!accepted)
+      await vi.waitFor(() =>
+        expect(form.find('.el-form-item__error').exists()).toBe(true),
+      )
+  },
+)
+
+it.each([null, 0])(
+  'should_handle_login_limit_without_inventing_delay_%s',
+  async (retryAfter) => {
+    const { flow } = setup()
+    vi.mocked(api.login).mockRejectedValue(
+      new ApiError({ code: 'LOGIN_RATE_LIMITED', status: 429, retryAfter }),
+    )
+    await flow.submit(valid)
+    expect(flow.error.value.code).toBe('LOGIN_RATE_LIMITED')
+    expect(flow.loginRemaining.value).toBe(0)
+    expect(flow.busy.value).toBe(false)
+  },
+)

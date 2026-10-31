@@ -2,6 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { login } from '../api/auth.js'
 import { ApiError } from '../utils/errors.js'
+import { reportError } from '../utils/logger.js'
 import {
   readSession,
   writeSession,
@@ -17,14 +18,24 @@ export const useAuthStore = defineStore('auth', () => {
     error = ref(null)
   let generation = 0
   const isAuthenticated = computed(() => isValidSession(session.value))
+  function storage() {
+    try {
+      return window.sessionStorage
+    } catch {
+      throw new ApiError({ code: 'STORAGE_UNAVAILABLE' })
+    }
+  }
+  function authFailure(failure) {
+    if (failure instanceof ApiError) return failure
+    const converted = new ApiError({ code: 'CLIENT_ERROR' })
+    reportError(converted)
+    return converted
+  }
   function restoreSession() {
     try {
-      session.value = readSession(window.sessionStorage)
+      session.value = readSession(storage())
     } catch (failure) {
-      error.value =
-        failure instanceof ApiError
-          ? failure
-          : new ApiError({ code: 'STORAGE_UNAVAILABLE' })
+      error.value = authFailure(failure)
       session.value = null
     }
   }
@@ -37,12 +48,9 @@ export const useAuthStore = defineStore('auth', () => {
     roleSelection.value = null
     pending.value = false
     try {
-      removeSession(window.sessionStorage)
+      removeSession(storage())
     } catch (failure) {
-      error.value =
-        failure instanceof ApiError
-          ? failure
-          : new ApiError({ code: 'STORAGE_UNAVAILABLE' })
+      error.value = authFailure(failure)
     }
   }
   async function authenticate(payload, { signal } = {}) {
@@ -54,21 +62,18 @@ export const useAuthStore = defineStore('auth', () => {
       const result = await login(payload, { signal })
       if (current !== generation || signal?.aborted) return null
       if (result.status === 'AUTHENTICATED') {
-        writeSession(window.sessionStorage, result.authentication)
+        writeSession(storage(), result.authentication)
         session.value = result.authentication
         clearRoleSelection()
       } else {
         session.value = null
-        removeSession(window.sessionStorage)
+        removeSession(storage())
         roleSelection.value = result.roleSelection
       }
       return result
     } catch (failure) {
       if (current !== generation || signal?.aborted) return null
-      error.value =
-        failure instanceof ApiError
-          ? failure
-          : new ApiError({ code: 'STORAGE_UNAVAILABLE' })
+      error.value = authFailure(failure)
       if (error.value.code === 'LOGIN_TICKET_INVALID') clearRoleSelection()
       throw error.value
     } finally {
@@ -77,7 +82,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
   async function selectRole(role, options = {}) {
     if (!['USER', 'ADMIN'].includes(role))
-      throw new ApiError({ code: 'ROLE_SELECTION_NOT_ALLOWED', status: 403 })
+      throw new ApiError({ code: 'INVALID_ROLE_SELECTION' })
     if (
       !roleSelection.value ||
       !isFutureInstant(roleSelection.value.expiresAt)

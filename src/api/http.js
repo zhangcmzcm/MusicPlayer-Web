@@ -30,9 +30,13 @@ http.interceptors.response.use(
     const status = error.response?.status || 0
     const data = error.response?.data
     const seconds = error.response?.headers?.['retry-after']
+    const numericSeconds = Number(seconds)
     const retryAfter =
-      /^\d+$/.test(String(seconds)) && Number.isSafeInteger(Number(seconds))
-        ? Number(seconds)
+      (typeof seconds === 'string' || typeof seconds === 'number') &&
+      /^\d+$/.test(String(seconds)) &&
+      Number.isSafeInteger(numericSeconds) &&
+      Number.isSafeInteger(Date.now() + numericSeconds * 1000)
+        ? numericSeconds
         : null
     const code =
       typeof data?.code === 'string'

@@ -3,7 +3,9 @@ export function authenticated(role = 'USER') {
     status: 'AUTHENTICATED',
     roleSelection: null,
     authentication: {
-      accessToken: 'e2e-session-token',
+      // 仅用于 mock 响应，非有效签名凭据。
+      accessToken:
+        'eyJhbGciOiJIUzI1NiJ9.eyJmaXh0dXJlIjp0cnVlfQ.c3ludGhldGljLXNpZ25hdHVyZQ',
       tokenType: 'Bearer',
       expiresAt: new Date(Date.now() + 3600000).toISOString(),
       user: {

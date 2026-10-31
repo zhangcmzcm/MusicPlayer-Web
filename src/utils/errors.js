@@ -13,6 +13,8 @@ export const errorMessages = {
   NETWORK_ERROR: '网络连接失败，请检查网络后重试。',
   TIMEOUT: '请求超时，请稍后重试。',
   STORAGE_UNAVAILABLE: '浏览器无法保存登录状态，请检查存储设置后重试。',
+  CLIENT_ERROR: '暂时无法完成操作，请稍后重试。',
+  INVALID_ROLE_SELECTION: '请选择有效的登录身份。',
   INVALID_RESPONSE: '服务返回的信息异常，请稍后重试。',
   CANCELLED: '操作已取消。',
 }

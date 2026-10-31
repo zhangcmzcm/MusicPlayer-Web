@@ -4,6 +4,7 @@ import {
   writeSession,
   clearSession,
   isValidSession,
+  isFutureInstant,
   SESSION_KEY,
 } from './session.js'
 import { authentication } from '../test/factories.js'
@@ -79,4 +80,80 @@ it('should_surface_storage_failures_safely', () => {
   expect(() => readSession(storage)).toThrow('浏览器')
   expect(() => writeSession(storage, authentication())).toThrow('浏览器')
   expect(() => writeSession(sessionStorage, {})).toThrow()
+})
+
+it.each(
+  [
+    undefined,
+    null,
+    '',
+    ' ',
+    'plain-token',
+    'a.b',
+    'a.b.c.d',
+    '.b.c',
+    'a..c',
+    'a.b.',
+    'a.b.c\n',
+    'a.b.c=',
+    'a.b.中文',
+    42,
+    false,
+    {},
+    [],
+  ].map((token) => ({ token })),
+)('should_discard_session_with_malformed_token_$token', ({ token }) => {
+  const value = authentication()
+  value.accessToken = token
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(value))
+  expect(readSession(sessionStorage)).toBeNull()
+  expect(sessionStorage.getItem(SESSION_KEY)).toBeNull()
+})
+
+it.each([
+  { field: 'id', value: undefined },
+  { field: 'id', value: null },
+  { field: 'id', value: '' },
+  { field: 'id', value: 1.5 },
+  { field: 'id', value: Number.MAX_SAFE_INTEGER + 1 },
+  { field: 'id', value: {} },
+  { field: 'username', value: undefined },
+  { field: 'username', value: null },
+  { field: 'username', value: '' },
+  { field: 'username', value: 42 },
+  { field: 'role', value: 'OWNER' },
+  { field: 'role', value: null },
+])('should_discard_session_with_invalid_$field_$value', ({ field, value }) => {
+  const session = authentication()
+  session.user[field] = value
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+  expect(readSession(sessionStorage)).toBeNull()
+  expect(sessionStorage.getItem(SESSION_KEY)).toBeNull()
+})
+
+it.each([
+  { instant: undefined, accepted: false },
+  { instant: null, accepted: false },
+  { instant: 42, accepted: false },
+  { instant: '', accepted: false },
+  { instant: 'invalid', accepted: false },
+  { instant: '2096-02-29T00:00:00Z', accepted: true },
+  { instant: '2099-02-29T00:00:00Z', accepted: false },
+  { instant: '2100-02-29T00:00:00Z', accepted: false },
+  { instant: '2400-02-29T00:00:00Z', accepted: true },
+  { instant: '2099-04-31T00:00:00Z', accepted: false },
+  { instant: '2099-13-01T00:00:00Z', accepted: false },
+  { instant: '2099-01-00T00:00:00Z', accepted: false },
+  { instant: '2099-01-01T00:00:00.123456789Z', accepted: true },
+])('should_validate_instant_$instant', ({ instant, accepted }) => {
+  expect(isFutureInstant(instant, Date.UTC(2028, 0, 1))).toBe(accepted)
+})
+
+it('should_reject_expiry_at_or_before_now_and_accept_next_millisecond', () => {
+  const now = Date.UTC(2028, 0, 1)
+  for (const delta of [-1, 0, 1]) {
+    expect(isFutureInstant(new Date(now + delta).toISOString(), now)).toBe(
+      delta > 0,
+    )
+  }
 })

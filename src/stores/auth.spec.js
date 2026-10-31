@@ -72,7 +72,10 @@ it('should_not_use_expired_ticket_or_accept_unknown_role', async () => {
     code: 'LOGIN_TICKET_INVALID',
   })
   auth.roleSelection = ticket()
-  await expect(auth.selectRole('OWNER')).rejects.toMatchObject({ status: 403 })
+  await expect(auth.selectRole('OWNER')).rejects.toMatchObject({
+    code: 'INVALID_ROLE_SELECTION',
+    status: 0,
+  })
   expect(api.login).not.toHaveBeenCalled()
 })
 it('should_clear_invalid_ticket_and_surface_errors', async () => {
@@ -122,4 +125,16 @@ it('should_discard_authentication_after_external_abort', async () => {
   response.resolve(authenticated())
   await request
   expect(auth.session).toBeNull()
+})
+
+it('should_classify_unexpected_api_exception_as_client_error_not_storage_failure', async () => {
+  vi.mocked(api.login).mockRejectedValue(new TypeError('private detail'))
+  const auth = useAuthStore()
+  await expect(auth.authenticate({})).rejects.toMatchObject({
+    code: 'CLIENT_ERROR',
+    status: 0,
+  })
+  expect(auth.error.detail).not.toContain('private detail')
+  expect(auth.session).toBeNull()
+  expect(auth.pending).toBe(false)
 })

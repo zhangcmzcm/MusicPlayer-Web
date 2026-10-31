@@ -3,11 +3,25 @@ import { ApiError } from './errors.js'
 export const SESSION_KEY = 'music-web.session'
 
 export function isFutureInstant(value, now = Date.now()) {
+  if (typeof value !== 'string') return false
+  const date = /^(\d{4})-(\d{2})-(\d{2})T.*Z$/.exec(value)
+  if (!date) return false
+  const year = Number(date[1]),
+    month = Number(date[2]),
+    day = Number(date[3])
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+  if (month < 1 || month > 12 || day < 1 || day > days[month - 1]) return false
+  const instant = Date.parse(value)
+  return Number.isFinite(instant) && instant > now
+}
+
+// 只识别紧凑 JWS 形态，不能证明签名有效或替代后端授权。
+function isCompactJws(value) {
   return (
     typeof value === 'string' &&
-    /^\d{4}-\d{2}-\d{2}T.*Z$/.test(value) &&
-    Number.isFinite(Date.parse(value)) &&
-    Date.parse(value) > now
+    /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(value) &&
+    !/\s/.test(value)
   )
 }
 
@@ -15,8 +29,7 @@ export function isValidSession(value, now = Date.now()) {
   const user = value?.user
   return Boolean(
     value &&
-    typeof value.accessToken === 'string' &&
-    value.accessToken.length &&
+    isCompactJws(value.accessToken) &&
     value.tokenType === 'Bearer' &&
     isFutureInstant(value.expiresAt, now) &&
     user &&

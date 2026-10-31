@@ -19,6 +19,67 @@ afterEach(() =>
   configureAuth({ getSession: () => null, onUnauthorized: () => {} }),
 )
 describe('HTTP contract', () => {
+  it.each([
+    { header: undefined, expected: null },
+    { header: null, expected: null },
+    { header: '', expected: null },
+    { header: 'abc', expected: null },
+    { header: '-1', expected: null },
+    { header: '1.5', expected: null },
+    { header: '0', expected: 0 },
+    { header: '30', expected: 30 },
+    { header: '9007199254740992', expected: null },
+    { header: String(Number.MAX_SAFE_INTEGER), expected: null },
+    { header: ['30'], expected: null },
+  ])(
+    'should_parse_retry_after_$header_as_$expected',
+    async ({ header, expected }) => {
+      const original = http.defaults.adapter
+      http.defaults.adapter = async (config) => {
+        throw {
+          config,
+          response: {
+            status: 429,
+            data: { code: 'LOGIN_RATE_LIMITED' },
+            headers: { 'retry-after': header },
+          },
+        }
+      }
+      try {
+        await expect(
+          http.get('/limited', { publicRequest: true }),
+        ).rejects.toMatchObject({
+          code: 'LOGIN_RATE_LIMITED',
+          retryAfter: expected,
+        })
+      } finally {
+        http.defaults.adapter = original
+      }
+    },
+  )
+  it.each([undefined, 'UNKNOWN_SCOPE', 42])(
+    'should_ignore_unrecognized_limit_scope_%s',
+    async (scope) => {
+      const original = http.defaults.adapter
+      http.defaults.adapter = async (config) => {
+        throw {
+          config,
+          response: {
+            status: 429,
+            data: { code: 'SEND_CODE_TOO_FREQUENTLY', scope },
+            headers: {},
+          },
+        }
+      }
+      try {
+        await expect(
+          http.get('/limited', { publicRequest: true }),
+        ).rejects.toMatchObject({ scope: null, retryAfter: null })
+      } finally {
+        http.defaults.adapter = original
+      }
+    },
+  )
   it('should_send_exact_public_login_payload_without_bearer', async () => {
     configureAuth({
       getSession: () => authentication(),
