@@ -1,0 +1,299 @@
+<script setup>
+import { provide, reactive, onUnmounted } from 'vue'
+import { RouterView } from 'vue-router'
+import { authSceneKey } from '../../composables/authScene.js'
+import LeafArtwork from './LeafArtwork.vue'
+
+const scene = reactive({ step: 'login' })
+provide(authSceneKey, scene)
+onUnmounted(() => {
+  scene.step = 'login'
+})
+</script>
+
+<template>
+  <div
+    class="auth-scene"
+    :class="{ 'choosing-role': scene.step === 'role-selection' }"
+    data-testid="auth-scene"
+  >
+    <header class="masthead">
+      <span class="brand"
+        ><svg viewBox="0 0 32 38" aria-hidden="true">
+          <path
+            d="M9 30C0 17 13 7 27 4C26 18 25 26 9 30Z"
+            fill="#62894b"
+            fill-opacity=".2"
+          />
+          <path
+            d="M7 34Q12 19 26 5M11 23Q4 21 4 16M16 16L24 15"
+            fill="none"
+            stroke="#587847"
+            stroke-width="1.4"
+          /></svg
+        >风与叶</span
+      >
+      <span class="brand-note">BREEZE &amp; LEAF</span>
+    </header>
+    <svg
+      class="wind"
+      viewBox="0 0 1440 900"
+      preserveAspectRatio="xMidYMid slice"
+      fill="none"
+      aria-hidden="true"
+    >
+      <g stroke="#f9ffe9">
+        <path
+          d="M-180 730C70 780 185 383 476 480S844 503 1065 263S1391 224 1590 44"
+          stroke-width="22"
+          opacity=".11"
+        />
+        <path
+          d="M-180 713C70 763 185 366 476 463S844 486 1065 246S1391 207 1590 27"
+          stroke-width="1.4"
+          opacity=".35"
+        />
+      </g>
+      <g class="far" stroke="#f7ffe9">
+        <path
+          d="M-160 200C106 208 71 454 365 362S657 217 918 402S1254 616 1600 344"
+          opacity=".25"
+        />
+        <path
+          d="M-160 213C106 221 71 467 365 375S657 230 918 415S1254 629 1600 357"
+          stroke-width="9"
+          opacity=".08"
+        />
+      </g>
+    </svg>
+    <div class="small-leaves" aria-hidden="true">
+      <LeafArtwork /><LeafArtwork /><LeafArtwork />
+    </div>
+    <main class="scene-main">
+      <LeafArtwork class="main-leaf" data-testid="main-leaf" />
+      <div class="scene-content"><RouterView /></div>
+    </main>
+    <aside class="poem" data-testid="scene-poem" aria-hidden="true">
+      <span>一叶清新</span><span>一曲自在</span>
+    </aside>
+  </div>
+</template>
+
+<style scoped>
+.auth-scene {
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 12% 2%, var(--green-light), transparent 61%),
+    radial-gradient(ellipse at 88% 90%, #bed68e, transparent 65%),
+    linear-gradient(125deg, var(--green-base), var(--green-deep));
+}
+.masthead {
+  position: absolute;
+  inset: 30px 44px auto;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  letter-spacing: 5px;
+}
+.brand svg {
+  width: 30px;
+  height: 36px;
+}
+.brand-note {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--ink-muted);
+}
+.scene-main {
+  position: relative;
+  min-height: max(920px, 100svh);
+  display: flow-root;
+}
+.main-leaf {
+  position: absolute;
+  top: -48px;
+  left: 38%;
+  transform: translateX(-50%);
+  width: 1040px;
+  height: calc(100% + 48px);
+  filter: drop-shadow(16px 23px 19px #56733236);
+  transition:
+    opacity 400ms,
+    translate 700ms;
+  pointer-events: none;
+}
+.scene-content {
+  position: relative;
+  width: 340px;
+  margin-left: calc(38% - 170px);
+  padding: 255px 0 235px;
+}
+.poem {
+  position: absolute;
+  left: 76%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 24px;
+  color: #526e40;
+  transition: opacity 250ms;
+}
+.poem span {
+  writing-mode: vertical-rl;
+  font-family: var(--font-serif);
+  font-size: 25px;
+  letter-spacing: 11px;
+  line-height: 1.8;
+}
+.wind {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+}
+.wind g {
+  animation: breeze 18s ease-in-out infinite alternate;
+}
+.wind .far {
+  animation-duration: 22s;
+  animation-direction: alternate-reverse;
+}
+.small-leaves {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+.small-leaves svg {
+  position: absolute;
+  width: 88px;
+  height: 120px;
+  opacity: 0.38;
+  animation: float 16s ease-in-out infinite alternate;
+}
+.small-leaves svg:nth-child(1) {
+  left: 5%;
+  top: 63%;
+  rotate: -55deg;
+}
+.small-leaves svg:nth-child(2) {
+  right: 9%;
+  top: 17%;
+  rotate: 25deg;
+  animation-delay: -6s;
+}
+.small-leaves svg:nth-child(3) {
+  right: 14%;
+  bottom: 7%;
+  width: 60px;
+  rotate: 95deg;
+  animation-delay: -10s;
+}
+.choosing-role .main-leaf {
+  opacity: 0;
+  translate: 35px -55px;
+}
+.choosing-role .poem {
+  opacity: 0;
+  visibility: hidden;
+}
+.choosing-role .scene-content {
+  width: min(100%, 1000px);
+  margin: auto;
+  padding: 155px 28px 90px;
+}
+.choosing-role .wind g {
+  animation-duration: 3s;
+}
+@keyframes breeze {
+  from {
+    translate: -15px 8px;
+    opacity: 0.55;
+  }
+  to {
+    translate: 20px -12px;
+    opacity: 0.95;
+  }
+}
+@keyframes float {
+  to {
+    translate: 10px -14px;
+  }
+}
+@media (min-width: 1600px) {
+  .main-leaf {
+    width: 1120px;
+  }
+  .scene-content {
+    padding-top: 270px;
+    padding-bottom: 260px;
+  }
+}
+@media (max-width: 1050px) {
+  .main-leaf {
+    left: 50%;
+  }
+  .scene-content {
+    margin: auto;
+  }
+  .poem {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  .masthead {
+    inset: 22px 22px auto;
+  }
+  .brand {
+    font-size: 17px;
+  }
+  .brand-note {
+    display: none;
+  }
+  .main-leaf {
+    width: 760px;
+    top: -110px;
+    height: calc(100% + 110px);
+  }
+  .scene-main {
+    min-height: max(880px, 100svh);
+  }
+  .scene-content {
+    width: min(300px, calc(100% - 64px));
+    padding: 230px 0 225px;
+  }
+  .choosing-role .scene-content {
+    padding: 125px 20px 70px;
+  }
+  .small-leaves svg:nth-child(2) {
+    right: -25px;
+  }
+  .small-leaves svg:nth-child(1) {
+    left: -30px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wind g,
+  .small-leaves svg {
+    animation: none;
+  }
+  .main-leaf,
+  .poem {
+    transition: none;
+  }
+}
+</style>

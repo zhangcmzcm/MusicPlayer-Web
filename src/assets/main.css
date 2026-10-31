@@ -1,0 +1,111 @@
+:root {
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  color: #30492f;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --green-light: #e6efcb;
+  --green-base: #c8dda4;
+  --green-deep: #abc879;
+  --green-action: #62894b;
+  --ink: #30492f;
+  --ink-muted: #607153;
+  --line: #d8e2ce;
+  --error-color: #a6534d;
+  --font-serif: 'Songti SC', 'STSong', 'SimSun', serif;
+  --el-color-primary: #62894b;
+  --el-color-primary-light-3: #8da779;
+  --el-color-primary-light-5: #acbf9e;
+  --el-color-primary-light-7: #cad7c2;
+  --el-color-primary-light-8: #dce5d6;
+  --el-color-primary-light-9: #eff3ec;
+  --el-color-primary-dark-2: #4f733c;
+  --el-color-danger: #a6534d;
+  --el-border-color: #d8e2ce;
+  --el-text-color-primary: #30492f;
+  --el-text-color-regular: #30492f;
+  --el-font-family: inherit;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+input {
+  font: inherit;
+}
+button,
+a,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+.el-form-item {
+  margin-bottom: 23px;
+}
+.el-form-item__label {
+  font-size: 12px !important;
+  color: var(--ink) !important;
+  letter-spacing: 1px;
+  padding-bottom: 7px !important;
+  height: auto !important;
+  line-height: 1.6 !important;
+}
+.el-input__wrapper {
+  min-height: 46px;
+  border-radius: 12px;
+  background: #fbfcf9;
+  padding: 1px 14px;
+  box-shadow: 0 0 0 1px var(--line) inset;
+}
+.el-input__inner {
+  font-size: 13px;
+  height: 44px;
+}
+.el-input__inner::placeholder {
+  color: #78836f;
+}
+.el-input__wrapper.is-focus {
+  outline: 2px solid #8aa66d;
+  outline-offset: 3px;
+}
+.el-form-item__error {
+  color: var(--error-color);
+  font-size: 12px;
+  line-height: 1.5;
+  position: static;
+  padding-top: 6px;
+}
+.el-form-item__content {
+  display: block;
+  line-height: normal;
+}
+.el-button {
+  transition:
+    background-color 150ms,
+    color 150ms,
+    border-color 150ms;
+}
+.el-button:focus-visible {
+  outline: 2px solid var(--green-action);
+  outline-offset: 4px;
+}
+.el-input.is-disabled .el-input__wrapper {
+  background: #f1f3ec;
+}
+.el-button.is-disabled {
+  --el-button-disabled-bg-color: #a4b698;
+  --el-button-disabled-border-color: #a4b698;
+  --el-button-disabled-text-color: #ffffff;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
