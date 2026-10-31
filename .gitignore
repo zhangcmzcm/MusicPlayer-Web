@@ -1,0 +1,54 @@
+# 本地 Agent 协作协议
+AGENTS.md
+CLAUDE.md
+
+# 环境配置与本地凭据（保留可提交的占位模板）
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+.aws/
+
+# 依赖与构建缓存
+node_modules/
+dist/
+dist-ssr/
+.vite/
+.cache/
+*.local
+*.tsbuildinfo
+
+# 测试与覆盖率产物
+coverage/
+playwright-report/
+playwright/.cache/
+test-results/
+blob-report/
+
+# 日志
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 本地 Agent 配置与工作产物
+.agents/
+.codex/
+.superpowers/
+
+# 编辑器与操作系统文件
+.idea/
+.vscode/
+*.suo
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
