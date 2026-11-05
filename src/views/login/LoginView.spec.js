@@ -156,3 +156,57 @@ it.each(['USER', 'ADMIN'])(
     )
   },
 )
+
+it('should_show_code_notice_original_error_and_recovery_together', async () => {
+  const { wrapper } = await setup()
+  await wrapper.get('[data-testid="other-methods"]').trigger('click')
+  await wrapper.get('[data-testid="method-EMAIL_CODE"]').trigger('click')
+  await wrapper
+    .get('[data-testid="email-input"]')
+    .setValue('listener@example.test')
+  vi.mocked(api.sendLoginCode).mockResolvedValue({
+    purpose: 'LOGIN',
+    expiresAt: ticket().expiresAt,
+  })
+  await wrapper.get('[data-testid="send-code"]').trigger('click')
+  await flushPromises()
+  vi.mocked(api.login).mockRejectedValue(
+    new ApiError({ code: 'AUTH_STATE_STORE_UNAVAILABLE', status: 503 }),
+  )
+  await wrapper.get('[data-testid="code-input"]').setValue('012345')
+  await wrapper.get('form').trigger('submit')
+  await flushPromises()
+  expect(wrapper.get('[data-testid="code-notice"]').text()).toContain(
+    '验证码已发送',
+  )
+  expect(wrapper.get('[data-testid="login-error"]').text()).toContain(
+    '登录服务暂时不可用',
+  )
+  expect(wrapper.get('[data-testid="login-recovery"]').text()).toContain(
+    '验证码可能已被使用',
+  )
+  expect(wrapper.findAll('[role="alert"]')).toHaveLength(1)
+  expect(api.login).toHaveBeenCalledTimes(1)
+})
+
+it('should_recommend_restart_after_uncertain_role_selection_and_clear_sensitive_state', async () => {
+  vi.useFakeTimers()
+  const { wrapper, auth } = await setup()
+  auth.roleSelection = ticket()
+  await flushPromises()
+  await vi.advanceTimersByTimeAsync(1100)
+  vi.mocked(api.login).mockRejectedValue(new ApiError({ code: 'TIMEOUT' }))
+  await wrapper.get('[data-testid="role-USER"]').trigger('click')
+  await flushPromises()
+  expect(wrapper.get('[data-testid="login-recovery"]').text()).toContain(
+    '登录票据',
+  )
+  expect(wrapper.get('[data-testid="restart-login"]').classes()).toContain(
+    'restart-recommended',
+  )
+  await wrapper.get('[data-testid="restart-login"]').trigger('click')
+  await flushPromises()
+  expect(auth.roleSelection).toBeNull()
+  expect(wrapper.get('[data-testid="password-input"]').element.value).toBe('')
+  expect(wrapper.find('[data-testid="login-recovery"]').exists()).toBe(false)
+})

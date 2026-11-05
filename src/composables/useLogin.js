@@ -13,6 +13,7 @@ export function useLogin(auth) {
   const loginType = ref('EMAIL_PASSWORD'),
     sending = ref(false),
     error = ref(auth.error),
+    recoveryNotice = ref(''),
     codeNotice = ref(''),
     selectedRole = ref(null)
   const now = ref(Date.now()),
@@ -85,20 +86,35 @@ export function useLogin(auth) {
     clearSensitive()
     error.value = null
     codeNotice.value = ''
+    recoveryNotice.value = ''
   }
-  function fail(failure) {
+  function fail(failure, phase) {
     if (disposed || failure.code === 'CANCELLED') return
     error.value = failure
+    if (
+      ['NETWORK_ERROR', 'TIMEOUT'].includes(failure.code) ||
+      failure.status === 503
+    ) {
+      if (phase === 'ROLE_SELECTION')
+        recoveryNotice.value =
+          '本次身份选择可能未完成，登录票据也可能已失效，请重新登录后选择。'
+      else if (phase === 'EMAIL_CODE')
+        recoveryNotice.value =
+          '本次登录结果未确认，验证码可能已被使用，请在允许发送后重新获取验证码。'
+    }
     if (failure.code === 'LOGIN_TICKET_INVALID') auth.clearRoleSelection()
     if (failure.status === 429 && failure.retryAfter !== null)
       loginDeadline.value = Date.now() + failure.retryAfter * 1000
   }
   async function submit(formRef) {
     if (busy.value || loginRemaining.value) return
+    const phase = loginType.value === 'EMAIL_CODE' ? 'EMAIL_CODE' : 'PASSWORD'
+    recoveryNotice.value = ''
     validating.value = true
+    let request
     try {
       if (!(await formRef?.validate()) || disposed) return
-      const request = newRequest()
+      request = newRequest()
       const payload =
         loginType.value === 'EMAIL_CODE'
           ? {
@@ -120,13 +136,14 @@ export function useLogin(auth) {
       })
       if (!disposed && !request.signal.aborted && result) clearSensitive()
     } catch (failure) {
-      fail(failure)
+      if (!request?.signal.aborted) fail(failure, phase)
     } finally {
       validating.value = false
     }
   }
   async function sendCode(formRef) {
     if (busy.value || sendRemaining.value) return
+    recoveryNotice.value = ''
     validating.value = true
     let request
     const email = normalizedEmail.value
@@ -166,12 +183,13 @@ export function useLogin(auth) {
   async function selectRole(role) {
     if (busy.value || loginRemaining.value) return
     const request = newRequest()
+    recoveryNotice.value = ''
     selectedRole.value = role
     error.value = null
     try {
       await auth.selectRole(role, { signal: request.signal })
     } catch (failure) {
-      fail(failure)
+      if (!request.signal.aborted) fail(failure, 'ROLE_SELECTION')
     } finally {
       if (!disposed) selectedRole.value = null
     }
@@ -180,6 +198,7 @@ export function useLogin(auth) {
     controller?.abort()
     auth.clearSession()
     clearSensitive()
+    recoveryNotice.value = ''
     error.value = auth.error?.code === 'STORAGE_UNAVAILABLE' ? auth.error : null
   }
   let codeExpiry = 0
@@ -218,6 +237,7 @@ export function useLogin(auth) {
     sending,
     error,
     codeNotice,
+    recoveryNotice,
     selectedRole,
     step,
     rules,

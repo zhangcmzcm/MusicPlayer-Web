@@ -21,6 +21,7 @@ const {
   sending,
   error,
   codeNotice,
+  recoveryNotice,
   selectedRole,
   step,
   rules,
@@ -79,22 +80,27 @@ function updateForm(value) {
       </h1>
       <p class="intro">{{ intro }}</p>
     </div>
-    <div
-      v-if="safeError"
-      class="feedback"
-      role="alert"
-      data-testid="login-error"
-    >
-      {{ safeError }}
+    <div class="feedback-space">
+      <div
+        v-if="safeError"
+        class="feedback"
+        role="alert"
+        data-testid="login-error"
+      >
+        <p>{{ safeError }}</p>
+        <p v-if="recoveryNotice" data-testid="login-recovery">
+          {{ recoveryNotice }}
+        </p>
+      </div>
+      <p
+        v-if="codeNotice"
+        class="code-notice"
+        role="status"
+        data-testid="code-notice"
+      >
+        {{ codeNotice }}
+      </p>
     </div>
-    <p
-      v-if="codeNotice"
-      class="code-notice"
-      role="status"
-      data-testid="code-notice"
-    >
-      {{ codeNotice }}
-    </p>
     <Transition name="step-content" mode="out-in">
       <LoginForm
         v-if="step === 'login'"
@@ -118,6 +124,7 @@ function updateForm(value) {
         :pending="busy"
         :selected-role="selectedRole"
         :retry-remaining="loginRemaining"
+        :restart-recommended="Boolean(recoveryNotice)"
         @role-selected="flow.selectRole"
         @restart="flow.restart"
       />
@@ -141,6 +148,13 @@ function updateForm(value) {
 </template>
 
 <style scoped>
+.heading {
+  padding-left: 48px;
+}
+.feedback-space {
+  min-height: 86px;
+  padding-top: 4px;
+}
 .step-content-enter-active,
 .step-content-leave-active {
   transition: opacity 180ms ease;
@@ -169,7 +183,7 @@ h1 {
   font-size: 35px;
   letter-spacing: 3px;
   line-height: 1.5;
-  margin: 15px 0 10px;
+  margin: 0;
 }
 h1:focus {
   outline: none;
@@ -179,23 +193,35 @@ h1:focus {
   letter-spacing: 1px;
   line-height: 1.8;
   color: var(--ink-muted);
-  margin: 0 0 28px;
+  margin: 0;
 }
 .feedback {
   font-size: 13px;
-  line-height: 1.7;
+  line-height: 20px;
   color: var(--error-color);
-  margin: 0 0 16px;
+  margin: 0;
   overflow-wrap: anywhere;
+}
+.feedback p {
+  margin: 0;
+}
+.feedback [data-testid='login-recovery'] {
+  font-size: 12px;
+  line-height: 18px;
+  margin-top: 4px;
 }
 .code-notice {
   font-size: 12px;
-  line-height: 1.7;
+  line-height: 18px;
   color: var(--green-action);
-  margin-bottom: 16px;
+  margin: 4px 0 0;
 }
 .role-view .heading {
+  padding-left: 0;
   text-align: center;
+}
+.role-view .feedback-space {
+  min-height: 90px;
 }
 .role-view .eyebrow {
   justify-content: center;
@@ -220,6 +246,12 @@ h1:focus {
   color: var(--ink-muted);
 }
 @media (max-width: 600px) {
+  .heading {
+    padding-left: 24px;
+  }
+  .feedback-space {
+    min-height: 126px;
+  }
   h1 {
     font-size: clamp(24px, 7vw, 31px);
     letter-spacing: 2px;

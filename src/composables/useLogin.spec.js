@@ -138,6 +138,128 @@ it('should_expire_ticket_and_surface_authentication_limits', async () => {
   expect(flow.loginRemaining.value).toBe(30)
 })
 
+const uncertainFailures = [
+  { code: 'NETWORK_ERROR', status: 0 },
+  { code: 'TIMEOUT', status: 0 },
+  { code: 'AUTH_STATE_STORE_UNAVAILABLE', status: 503 },
+]
+it.each(uncertainFailures)(
+  'should_explain_uncertain_email_code_result_for_$code',
+  async (failure) => {
+    const original = new ApiError(failure)
+    vi.mocked(api.login).mockRejectedValue(original)
+    const { flow } = setup()
+    flow.changeMethod('EMAIL_CODE')
+    await flow.submit(valid)
+    expect(flow.error.value).toBe(original)
+    expect(flow.recoveryNotice.value).toContain('验证码可能已被使用')
+    expect(flow.busy.value).toBe(false)
+    expect(api.login).toHaveBeenCalledTimes(1)
+    expect(api.sendLoginCode).not.toHaveBeenCalled()
+  },
+)
+it.each(uncertainFailures)(
+  'should_explain_uncertain_ticket_result_for_$code_without_consuming_it_locally',
+  async (failure) => {
+    const { flow } = setup(),
+      auth = useAuthStore()
+    auth.roleSelection = ticket()
+    vi.mocked(api.login).mockRejectedValue(new ApiError(failure))
+    await flow.selectRole('USER')
+    expect(flow.recoveryNotice.value).toContain('登录票据也可能已失效')
+    expect(auth.roleSelection).not.toBeNull()
+    expect(api.login).toHaveBeenCalledTimes(1)
+    flow.form.password = 'sensitive'
+    flow.form.code = '012345'
+    flow.restart()
+    expect(auth.roleSelection).toBeNull()
+    expect(flow.recoveryNotice.value).toBe('')
+    expect(flow.form.password).toBe('')
+    expect(flow.form.code).toBe('')
+  },
+)
+it.each([
+  ...uncertainFailures.map((failure) => ({
+    ...failure,
+    method: 'EMAIL_PASSWORD',
+  })),
+  ...[
+    { code: 'INVALID_CREDENTIALS', status: 401 },
+    { code: 'LOGIN_TICKET_INVALID', status: 401 },
+    { code: 'ROLE_SELECTION_NOT_ALLOWED', status: 403 },
+    { code: 'LOGIN_RATE_LIMITED', status: 429 },
+    { code: 'STORAGE_UNAVAILABLE', status: 0 },
+    { code: 'CLIENT_ERROR', status: 0 },
+    { code: 'CANCELLED', status: 0 },
+  ].map((failure) => ({ ...failure, method: 'EMAIL_CODE' })),
+])(
+  'should_not_misclassify_$method_$code_as_consumed_credentials',
+  async ({ method, ...failure }) => {
+    const { flow } = setup()
+    flow.changeMethod(method)
+    vi.mocked(api.login).mockRejectedValue(new ApiError(failure))
+    await flow.submit(valid)
+    expect(flow.recoveryNotice.value).toBe('')
+  },
+)
+it('should_preserve_code_notice_and_cooldown_and_clear_recovery_on_new_operations', async () => {
+  vi.useFakeTimers()
+  const { flow } = setup()
+  flow.changeMethod('EMAIL_CODE')
+  flow.form.email = 'listener@example.test'
+  vi.mocked(api.sendLoginCode).mockResolvedValue({
+    expiresAt: ticket().expiresAt,
+  })
+  await flow.sendCode(valid)
+  vi.mocked(api.login).mockRejectedValue(new ApiError({ code: 'TIMEOUT' }))
+  await flow.submit(valid)
+  expect(flow.recoveryNotice.value).not.toBe('')
+  expect(flow.codeNotice.value).toContain('验证码已发送')
+  await flow.sendCode(valid)
+  expect(api.sendLoginCode).toHaveBeenCalledTimes(1)
+  expect(flow.sendRemaining.value).toBe(60)
+  const response = deferred()
+  vi.mocked(api.login).mockReturnValue(response.promise)
+  const pending = flow.submit(valid)
+  await flushPromises()
+  expect(flow.recoveryNotice.value).toBe('')
+  response.resolve(authenticated())
+  await pending
+  expect(flow.recoveryNotice.value).toBe('')
+})
+it('should_clear_recovery_on_method_change_or_send_failure', async () => {
+  const { flow } = setup()
+  flow.changeMethod('EMAIL_CODE')
+  vi.mocked(api.login).mockRejectedValue(new ApiError({ code: 'TIMEOUT' }))
+  await flow.submit(valid)
+  flow.changeMethod('EMAIL_PASSWORD')
+  expect(flow.recoveryNotice.value).toBe('')
+  flow.changeMethod('EMAIL_CODE')
+  await flow.submit(valid)
+  vi.mocked(api.sendLoginCode).mockRejectedValue(
+    new ApiError({ code: 'NETWORK_ERROR' }),
+  )
+  await flow.sendCode(valid)
+  expect(flow.recoveryNotice.value).toBe('')
+})
+it.each(['restart', 'unmount'])(
+  'should_ignore_late_failure_after_%s',
+  async (action) => {
+    const { flow, wrapper } = setup()
+    flow.changeMethod('EMAIL_CODE')
+    const response = deferred()
+    vi.mocked(api.login).mockReturnValue(response.promise)
+    const pending = flow.submit(valid)
+    await flushPromises()
+    if (action === 'restart') flow.restart()
+    else wrapper.unmount()
+    response.reject(new ApiError({ code: 'TIMEOUT' }))
+    await pending
+    expect(flow.recoveryNotice.value).toBe('')
+    expect(flow.error.value).toBeNull()
+  },
+)
+
 const boundaryCases = [
   ...[119, 120, 121].map((length) => ({
     field: 'email',

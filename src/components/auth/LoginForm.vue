@@ -129,6 +129,7 @@ defineExpose({ validate, validateEmail })
         @update:model-value="update('password', $event)"
       />
     </el-form-item>
+    <div class="password-assist-space" aria-hidden="true"></div>
     <el-button
       class="login-button"
       type="primary"
@@ -150,24 +151,52 @@ defineExpose({ validate, validateEmail })
       >
         其他登录方式 <span aria-hidden="true">{{ expanded ? '⌃' : '⌄' }}</span>
       </button>
-      <div v-if="expanded" id="login-methods" class="alternatives">
-        <button
-          v-for="[type, label] in alternatives"
-          :key="type"
-          type="button"
-          class="text-button"
-          :disabled="busy"
-          :data-testid="`method-${type}`"
-          @click="emit('method-changed', type)"
-        >
-          {{ label }}
-        </button>
+      <div class="alternatives-space">
+        <div v-if="expanded" id="login-methods" class="alternatives">
+          <button
+            v-for="[type, label] in alternatives"
+            :key="type"
+            type="button"
+            class="text-button"
+            :disabled="busy"
+            :data-testid="`method-${type}`"
+            @click="emit('method-changed', type)"
+          >
+            {{ label }}
+          </button>
+        </div>
       </div>
     </div>
+    <div class="account-navigation-space" aria-hidden="true"></div>
   </el-form>
 </template>
 
 <style scoped>
+:deep(.el-form-item) {
+  margin-bottom: 0;
+}
+:deep(.el-form-item__content) {
+  min-height: 88px;
+}
+:deep(.el-form-item__error) {
+  min-height: 42px;
+}
+.password-assist-space,
+.account-navigation-space {
+  min-height: 22px;
+  font-size: 12px;
+  line-height: 22px;
+  color: var(--green-action);
+}
+.password-assist-space {
+  text-align: right;
+}
+.account-navigation-space {
+  text-align: center;
+}
+.alternatives-space {
+  min-height: 34px;
+}
 .code-row {
   display: flex;
   width: 100%;
@@ -177,6 +206,8 @@ defineExpose({ validate, validateEmail })
   min-width: 0;
 }
 .code-row .el-button {
+  width: 106px;
+  flex-shrink: 0;
   height: 46px;
   padding: 0 10px;
   font-size: 12px;
@@ -186,18 +217,19 @@ defineExpose({ validate, validateEmail })
   height: 46px;
   border-radius: 30px;
   letter-spacing: 5px;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 .method-switch {
   text-align: center;
-  margin-top: 19px;
+  margin-top: 10px;
+  line-height: 28px;
 }
 .alternatives {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
   gap: 8px 18px;
-  margin-top: 12px;
+  padding-top: 4px;
 }
 .text-button {
   font: inherit;

@@ -6,6 +6,7 @@ defineProps({
   pending: Boolean,
   selectedRole: { type: String, default: null },
   retryRemaining: { type: Number, default: 0 },
+  restartRecommended: Boolean,
 })
 const emit = defineEmits(['role-selected', 'restart'])
 const ready = ref(false)
@@ -84,6 +85,7 @@ const roles = [
     <button
       type="button"
       class="text-button"
+      :class="{ 'restart-recommended': restartRecommended }"
       :disabled="pending"
       data-testid="restart-login"
       @click="emit('restart')"
@@ -94,6 +96,11 @@ const roles = [
 </template>
 
 <style scoped>
+.restart-recommended {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
 .role-selection {
   text-align: center;
 }

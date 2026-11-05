@@ -84,7 +84,7 @@ onUnmounted(() => {
   position: relative;
   isolation: isolate;
   min-height: 100svh;
-  overflow: hidden;
+  overflow: clip;
   background:
     radial-gradient(ellipse at 12% 2%, var(--green-light), transparent 61%),
     radial-gradient(ellipse at 88% 90%, #bed68e, transparent 65%),
@@ -117,16 +117,16 @@ onUnmounted(() => {
 }
 .scene-main {
   position: relative;
-  min-height: max(920px, 100svh);
+  min-height: 100svh;
   display: flow-root;
 }
 .main-leaf {
   position: absolute;
-  top: -48px;
+  top: -120px;
   left: 38%;
   transform: translateX(-50%);
-  width: 1040px;
-  height: calc(100% + 48px);
+  width: 1400px;
+  height: max(1080px, calc(100svh + 120px));
   filter: drop-shadow(16px 23px 19px #56733236);
   transition:
     opacity 400ms,
@@ -137,11 +137,11 @@ onUnmounted(() => {
   position: relative;
   width: 340px;
   margin-left: calc(38% - 170px);
-  padding: 255px 0 235px;
+  padding: max(160px, calc(160px + (100svh - 768px) * 0.2)) 0 4px;
 }
 .poem {
   position: absolute;
-  left: 76%;
+  left: max(76%, calc(38% + 600px));
   top: 50%;
   transform: translate(-50%, -50%);
   display: flex;
@@ -234,15 +234,6 @@ onUnmounted(() => {
     translate: 10px -14px;
   }
 }
-@media (min-width: 1600px) {
-  .main-leaf {
-    width: 1120px;
-  }
-  .scene-content {
-    padding-top: 270px;
-    padding-bottom: 260px;
-  }
-}
 @media (max-width: 1050px) {
   .main-leaf {
     left: 50%;
@@ -265,16 +256,16 @@ onUnmounted(() => {
     display: none;
   }
   .main-leaf {
-    width: 760px;
-    top: -110px;
-    height: calc(100% + 110px);
+    width: 1000px;
+    top: -120px;
+    height: 1250px;
   }
   .scene-main {
-    min-height: max(880px, 100svh);
+    min-height: 100svh;
   }
   .scene-content {
     width: min(300px, calc(100% - 64px));
-    padding: 230px 0 225px;
+    padding: 210px 0 150px;
   }
   .choosing-role .scene-content {
     padding: 125px 20px 70px;
