@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, useId, watch } from 'vue'
 import { loginMethods } from '../../composables/useLogin.js'
 
 const props = defineProps({
@@ -19,6 +19,7 @@ const emit = defineEmits([
 ])
 const formRef = ref(),
   expanded = ref(false)
+const formId = useId()
 const isUsername = computed(() => props.loginType === 'USERNAME_PASSWORD')
 const isCode = computed(() => props.loginType === 'EMAIL_CODE')
 const alternatives = computed(() =>
@@ -29,6 +30,16 @@ const sendLabel = computed(() =>
 )
 function update(field, value) {
   emit('update:modelValue', { ...props.modelValue, [field]: value })
+}
+function hasValue(value) {
+  return String(value ?? '').length > 0
+}
+function errorAttributes(field) {
+  const invalid = formRef.value?.getField(field)?.validateState === 'error'
+  return {
+    'aria-invalid': invalid,
+    'aria-describedby': invalid ? `${formId}-${field}-error` : undefined,
+  }
 }
 async function validate() {
   try {
@@ -63,6 +74,7 @@ defineExpose({ validate, validateEmail })
     :rules="rules"
     label-position="top"
     :disabled="busy"
+    :class="{ 'is-busy': busy }"
     hide-required-asterisk
     novalidate
     @submit.prevent="emit('submit')"
@@ -75,35 +87,69 @@ defineExpose({ validate, validateEmail })
       key="username"
       label="用户名"
       prop="username"
+      class="floating-field"
+      :class="{ 'has-value': hasValue(modelValue.username) }"
     >
       <el-input
         :model-value="modelValue.username"
         autocomplete="username"
         name="username"
-        placeholder="你的用户名"
+        v-bind="errorAttributes('username')"
         data-testid="username-input"
         @update:model-value="update('username', $event)"
       />
+      <template #error="{ error }"
+        ><div
+          :id="`${formId}-username-error`"
+          class="el-form-item__error"
+          role="alert"
+        >
+          {{ error }}
+        </div></template
+      >
     </el-form-item>
-    <el-form-item v-else key="email" label="邮箱" prop="email">
+    <el-form-item
+      v-else
+      key="email"
+      label="邮箱"
+      prop="email"
+      class="floating-field"
+      :class="{ 'has-value': hasValue(modelValue.email) }"
+    >
       <el-input
         :model-value="modelValue.email"
         type="email"
         autocomplete="username"
         name="email"
-        placeholder="你的邮箱地址"
+        v-bind="errorAttributes('email')"
         data-testid="email-input"
         @update:model-value="update('email', $event)"
       />
+      <template #error="{ error }"
+        ><div
+          :id="`${formId}-email-error`"
+          class="el-form-item__error"
+          role="alert"
+        >
+          {{ error }}
+        </div></template
+      >
     </el-form-item>
-    <el-form-item v-if="isCode" key="code" label="验证码" prop="code">
+    <el-form-item
+      v-if="isCode"
+      key="code"
+      label="验证码"
+      prop="code"
+      class="floating-field"
+      :class="{ 'has-value': hasValue(modelValue.code) }"
+    >
       <div class="code-row">
         <el-input
           :model-value="modelValue.code"
           inputmode="numeric"
           autocomplete="one-time-code"
           name="code"
-          placeholder="6 位数字验证码"
+          v-bind="errorAttributes('code')"
           data-testid="code-input"
           @update:model-value="update('code', $event)"
         />
@@ -116,18 +162,57 @@ defineExpose({ validate, validateEmail })
           >{{ sendLabel }}</el-button
         >
       </div>
+      <template #error="{ error }"
+        ><div
+          :id="`${formId}-code-error`"
+          class="el-form-item__error"
+          role="alert"
+        >
+          {{ error }}
+        </div></template
+      >
     </el-form-item>
-    <el-form-item v-else key="password" label="密码" prop="password">
+    <el-form-item
+      v-else
+      key="password"
+      label="密码"
+      prop="password"
+      class="floating-field"
+      :class="{ 'has-value': hasValue(modelValue.password) }"
+    >
       <el-input
         :model-value="modelValue.password"
         type="password"
         show-password
         autocomplete="current-password"
         name="password"
-        placeholder="你的登录密码"
+        v-bind="errorAttributes('password')"
         data-testid="password-input"
         @update:model-value="update('password', $event)"
-      />
+      >
+        <template #password-icon="{ visible }">
+          <button
+            type="button"
+            class="password-toggle"
+            :aria-label="visible ? '隐藏密码' : '显示密码'"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z" />
+              <circle cx="12" cy="12" r="3" />
+              <path v-if="visible" d="m3 3 18 18" />
+            </svg>
+          </button>
+        </template>
+      </el-input>
+      <template #error="{ error }"
+        ><div
+          :id="`${formId}-password-error`"
+          class="el-form-item__error"
+          role="alert"
+        >
+          {{ error }}
+        </div></template
+      >
     </el-form-item>
     <div class="password-assist-space" aria-hidden="true"></div>
     <el-button
@@ -172,6 +257,65 @@ defineExpose({ validate, validateEmail })
 </template>
 
 <style scoped>
+.floating-field {
+  position: relative;
+}
+.password-toggle {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.password-toggle svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+.password-toggle:focus-visible {
+  outline: 2px solid var(--green-action);
+  outline-offset: 3px;
+}
+.floating-field :deep(.el-form-item__label) {
+  position: absolute;
+  top: 23px;
+  left: 14px;
+  z-index: 2;
+  transform: translateY(-50%);
+  height: 18px !important;
+  padding: 0 !important;
+  font-size: 13px !important;
+  line-height: 18px !important;
+  color: #78836f !important;
+  cursor: text;
+  transition:
+    top 150ms,
+    font-size 150ms,
+    color 150ms;
+}
+.floating-field.has-value :deep(.el-form-item__label),
+.floating-field:focus-within :deep(.el-form-item__label),
+.floating-field.is-error :deep(.el-form-item__label) {
+  top: 0;
+  left: 9px;
+  padding: 0 5px !important;
+  font-size: 11px !important;
+  color: var(--ink-muted) !important;
+  background: #fbfcf9;
+}
+.floating-field:focus-within :deep(.el-form-item__label) {
+  color: var(--green-action) !important;
+}
+.floating-field.is-error :deep(.el-form-item__label) {
+  color: var(--error-color) !important;
+}
+.is-busy .floating-field :deep(.el-form-item__label) {
+  color: #88967c !important;
+}
 :deep(.el-form-item) {
   margin-bottom: 0;
 }
@@ -251,5 +395,10 @@ defineExpose({ validate, validateEmail })
   outline: 2px solid var(--green-action);
   outline-offset: 4px;
   border-radius: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .floating-field :deep(.el-form-item__label) {
+    transition: none;
+  }
 }
 </style>

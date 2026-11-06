@@ -125,7 +125,7 @@ onUnmounted(() => {
   top: -120px;
   left: 38%;
   transform: translateX(-50%);
-  width: 1400px;
+  width: 1188px;
   height: max(1080px, calc(100svh + 120px));
   filter: drop-shadow(16px 23px 19px #56733236);
   transition:
@@ -250,22 +250,28 @@ onUnmounted(() => {
     inset: 22px 22px auto;
   }
   .brand {
-    font-size: 17px;
+    font-size: 16px;
+    gap: 7px;
+    letter-spacing: 3px;
+  }
+  .brand svg {
+    width: 24px;
+    height: 28px;
   }
   .brand-note {
     display: none;
   }
   .main-leaf {
-    width: 1000px;
-    top: -120px;
-    height: 1250px;
+    width: 950px;
+    top: -220px;
+    height: 1080px;
   }
   .scene-main {
     min-height: 100svh;
   }
   .scene-content {
     width: min(300px, calc(100% - 64px));
-    padding: 210px 0 150px;
+    padding: 112px 0 20px;
   }
   .choosing-role .scene-content {
     padding: 125px 20px 70px;
@@ -274,7 +280,12 @@ onUnmounted(() => {
     right: -25px;
   }
   .small-leaves svg:nth-child(1) {
-    left: -30px;
+    left: -25px;
+    top: 72px;
+  }
+  .small-leaves svg:nth-child(3) {
+    right: -6px;
+    bottom: 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {

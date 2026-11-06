@@ -247,10 +247,14 @@ h1:focus {
 }
 @media (max-width: 600px) {
   .heading {
-    padding-left: 24px;
+    padding-left: 12px;
   }
   .feedback-space {
-    min-height: 126px;
+    min-height: 64px;
+  }
+  .feedback {
+    font-size: 12px;
+    line-height: 18px;
   }
   h1 {
     font-size: clamp(24px, 7vw, 31px);

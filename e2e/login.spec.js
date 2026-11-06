@@ -40,7 +40,7 @@ async function leafOverflow(page) {
     const path = document.querySelector('[data-testid="main-leaf"] path')
     const inverse = path.getScreenCTM().inverse()
     const elements = document.querySelectorAll(
-      '[data-testid="login-view"] h1, [data-testid="login-view"] .eyebrow, [data-testid="login-view"] .intro, [data-testid="login-view"] input, [data-testid="login-submit"], .el-form-item__error, [data-testid="login-error"] p, [data-testid="code-notice"], [data-capacity-probe]',
+      '[data-testid="login-view"] h1, [data-testid="login-view"] .eyebrow, [data-testid="login-view"] .intro, [data-testid="login-view"] label, [data-testid="login-view"] input, [data-testid="login-submit"], .el-form-item__error, [data-testid="login-error"] p, [data-testid="code-notice"], [data-capacity-probe]',
     )
     return [...elements]
       .filter((element) => {
@@ -69,6 +69,8 @@ for (const viewport of [
   { width: 1366, height: 768 },
   { width: 1440, height: 900 },
   { width: 1920, height: 1080 },
+  { width: 320, height: 740 },
+  { width: 390, height: 844 },
 ])
   for (const method of ['EMAIL_PASSWORD', 'USERNAME_PASSWORD', 'EMAIL_CODE']) {
     test(`should_keep_stable_layout_${viewport.width}_${method}`, async ({
@@ -84,7 +86,9 @@ for (const viewport of [
                 expiresAt: new Date(Date.now() + 300000).toISOString(),
               },
             }
-          : { status: 503, body: { code: 'AUTH_STATE_STORE_UNAVAILABLE' } },
+          : viewport.width <= 600
+            ? { status: 401, body: { code: 'INVALID_CREDENTIALS' } }
+            : { status: 503, body: { code: 'AUTH_STATE_STORE_UNAVAILABLE' } },
       )
       await page.goto('/login')
       if (method !== 'EMAIL_PASSWORD') {
@@ -136,7 +140,8 @@ for (const viewport of [
       await page.getByTestId('login-submit').click()
       await expect(page.getByTestId('login-error')).toBeVisible()
       if (method === 'EMAIL_CODE') {
-        await expect(page.getByTestId('login-recovery')).toBeVisible()
+        if (viewport.width > 600)
+          await expect(page.getByTestId('login-recovery')).toBeVisible()
         await expect(page.getByTestId('code-notice')).toBeVisible()
       }
       await expectStable(page, initial)
@@ -194,6 +199,8 @@ for (const viewport of [
   { width: 320, height: 740 },
   { width: 390, height: 844 },
   { width: 1366, height: 600 },
+  { width: 320, height: 480 },
+  { width: 390, height: 400 },
 ])
   test(`should_allow_page_scroll_in_short_viewport_${viewport.width}_${viewport.height}`, async ({
     page,
@@ -271,6 +278,7 @@ test('should_recover_from_uncertain_ticket_without_automatic_retry', async ({
 test('should_preserve_code_cooldown_after_uncertain_network_result', async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
   let logins = 0,
     sends = 0
   await page.route('**/api/v1/**', async (route) => {
@@ -307,6 +315,119 @@ test('should_preserve_code_cooldown_after_uncertain_network_result', async ({
   await page.getByTestId('send-code').click()
   await expect(page.getByTestId('login-recovery')).toHaveCount(0)
   expect(sends).toBe(2)
+})
+
+for (const width of [320, 1440])
+  for (const method of ['EMAIL_PASSWORD', 'USERNAME_PASSWORD', 'EMAIL_CODE']) {
+    test(`should_float_accessible_labels_${width}_${method}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: width === 320 ? 740 : 900 })
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await page.goto('/login')
+      if (method !== 'EMAIL_PASSWORD') {
+        await page.getByTestId('other-methods').click()
+        await page.getByTestId(`method-${method}`).click()
+      }
+      const name = method === 'USERNAME_PASSWORD' ? '用户名' : '邮箱'
+      const input = page.getByLabel(name, { exact: true })
+      await expect(input).toBeVisible()
+      const position = () =>
+        input.evaluate((element) => {
+          const label = document.querySelector(`label[for="${element.id}"]`)
+          const box = label.getBoundingClientRect()
+          return {
+            offset:
+              box.top +
+              box.height / 2 -
+              element.closest('.el-input').getBoundingClientRect().top,
+            size: parseFloat(getComputedStyle(label).fontSize),
+          }
+        })
+      const original = await stableBoxes(page)
+      expect((await position()).offset).toBeCloseTo(23, 0)
+      await page
+        .locator('label')
+        .filter({ hasText: new RegExp(`^${name}$`) })
+        .click()
+      await expect(input).toBeFocused()
+      expect((await position()).offset).toBeCloseTo(0, 0)
+      expect((await position()).size).toBe(11)
+      await input.fill(
+        method === 'USERNAME_PASSWORD' ? 'listener' : 'listener@example.test',
+      )
+      await page.getByTestId('login-title').focus()
+      expect((await position()).offset).toBeCloseTo(0, 0)
+      const second = page.getByLabel(
+        method === 'EMAIL_CODE' ? '验证码' : '密码',
+        { exact: true },
+      )
+      await second.fill(
+        method === 'EMAIL_CODE' ? '012345' : ' spaced-password ',
+      )
+      await expectStable(page, original)
+      await expect(second).toHaveValue(
+        method === 'EMAIL_CODE' ? '012345' : ' spaced-password ',
+      )
+      if (method !== 'EMAIL_CODE') {
+        await page
+          .getByRole('button', { name: '显示密码', exact: true })
+          .focus()
+        await page.keyboard.press('Enter')
+        await expect(second).toHaveAttribute('type', 'text')
+        await expect(
+          page.getByRole('button', { name: '隐藏密码', exact: true }),
+        ).toBeFocused()
+        await expectStable(page, original)
+      }
+      await input.fill('')
+      await page.getByTestId('login-submit').click()
+      await expect(input).toHaveAttribute('aria-invalid', 'true')
+      expect((await position()).offset).toBeCloseTo(0, 0)
+      const errorId = await input.getAttribute('aria-describedby')
+      await expect(page.locator(`[id="${errorId}"]`)).toBeVisible()
+      await expectStable(page, original)
+      expect(await leafOverflow(page)).toEqual([])
+    })
+  }
+
+test('should_keep_mobile_decorations_visible_with_reduced_motion', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 740 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/login')
+  await expect(page.getByTestId('login-submit')).toBeVisible()
+  await expect(page.locator('.small-leaves > svg')).toHaveCount(3)
+  await expect(page.locator('svg.wind')).toBeVisible()
+  const decorations = await page.evaluate(() => {
+    const main = document.querySelector('[data-testid="main-leaf"] path')
+    const inverseMain = main.getScreenCTM().inverse()
+    return [...document.querySelectorAll('.small-leaves > svg')].map((svg) => {
+      const path = svg.querySelector('path'),
+        inverse = path.getScreenCTM().inverse(),
+        box = svg.getBoundingClientRect()
+      let exposed = false
+      for (
+        let x = Math.max(0, box.left);
+        x < Math.min(innerWidth, box.right);
+        x += 4
+      )
+        for (
+          let y = Math.max(0, box.top);
+          y < Math.min(innerHeight, box.bottom);
+          y += 4
+        )
+          if (
+            path.isPointInFill(new DOMPoint(x, y).matrixTransform(inverse)) &&
+            !main.isPointInFill(new DOMPoint(x, y).matrixTransform(inverseMain))
+          )
+            exposed = true
+      return { exposed, animation: getComputedStyle(svg).animationName }
+    })
+  })
+  expect(decorations.some((leaf) => leaf.exposed)).toBe(true)
+  expect(decorations.every((leaf) => leaf.animation === 'none')).toBe(true)
 })
 
 test('should_validate_empty_form_without_network', async ({ page }) => {

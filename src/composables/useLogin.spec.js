@@ -319,6 +319,7 @@ it.each(boundaryCases)(
 it.each([null, 0])(
   'should_handle_login_limit_without_inventing_delay_%s',
   async (retryAfter) => {
+    vi.useFakeTimers()
     const { flow } = setup()
     vi.mocked(api.login).mockRejectedValue(
       new ApiError({ code: 'LOGIN_RATE_LIMITED', status: 429, retryAfter }),
