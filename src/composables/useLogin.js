@@ -1,6 +1,7 @@
 import { computed, onScopeDispose, reactive, ref, watch } from 'vue'
 import { sendLoginCode } from '../api/auth.js'
 import { ApiError } from '../utils/errors.js'
+import { useAuthFlowStore } from '../stores/authFlow.js'
 
 export const loginMethods = {
   EMAIL_PASSWORD: '邮箱密码登录',
@@ -9,6 +10,7 @@ export const loginMethods = {
 }
 
 export function useLogin(auth) {
+  const shared = useAuthFlowStore()
   const form = reactive({ email: '', username: '', password: '', code: '' })
   const loginType = ref('EMAIL_PASSWORD'),
     sending = ref(false),
@@ -17,8 +19,6 @@ export function useLogin(auth) {
     codeNotice = ref(''),
     selectedRole = ref(null)
   const now = ref(Date.now()),
-    sendDeadlines = reactive(new Map()),
-    globalSendDeadline = ref(0),
     loginDeadline = ref(0)
   const validating = ref(false)
   const busy = computed(() => auth.pending || sending.value || validating.value)
@@ -33,12 +33,7 @@ export function useLogin(auth) {
   const remaining = (deadline) =>
     Math.max(0, Math.ceil((deadline - now.value) / 1000))
   const sendRemaining = computed(() =>
-    remaining(
-      Math.max(
-        globalSendDeadline.value,
-        sendDeadlines.get(normalizedEmail.value) || 0,
-      ),
-    ),
+    shared.sendRemaining('LOGIN', normalizedEmail.value, now.value),
   )
   const loginRemaining = computed(() => remaining(loginDeadline.value))
   const rules = {
@@ -156,7 +151,7 @@ export function useLogin(auth) {
       const response = await sendLoginCode(email, { signal: request.signal })
       if (disposed || request.signal.aborted) return
       now.value = Date.now()
-      sendDeadlines.set(email, now.value + 60000)
+      shared.recordSend('LOGIN', email, now.value + 60000)
       if (normalizedEmail.value === email)
         codeNotice.value = '验证码已发送，请及时查收。'
       // UTC 截止时间由服务端返回；有效期提示不延长客户端发送冷却。
@@ -167,13 +162,7 @@ export function useLogin(auth) {
       error.value = failure
       if (failure.status === 429 && failure.retryAfter !== null) {
         now.value = Date.now()
-        const deadline = now.value + failure.retryAfter * 1000
-        if (
-          failure.scope === 'EMAIL_COOLDOWN' ||
-          failure.scope === 'EMAIL_DAILY_LIMIT'
-        )
-          sendDeadlines.set(email, deadline)
-        else globalSendDeadline.value = deadline
+        shared.recordLimit('LOGIN', email, failure, now.value)
       }
     } finally {
       if (!disposed) sending.value = false
@@ -231,6 +220,13 @@ export function useLogin(auth) {
     auth.clearRoleSelection()
   })
   return {
+    prefillRegisteredUsername(username) {
+      loginType.value = 'USERNAME_PASSWORD'
+      form.username = username
+      clearSensitive()
+      error.value = null
+      auth.clearRoleSelection()
+    },
     form,
     loginType,
     busy,

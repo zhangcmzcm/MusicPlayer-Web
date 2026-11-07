@@ -5,7 +5,7 @@ async function stableBoxes(page) {
   return page.evaluate(() =>
     [
       '[data-testid="main-leaf"]',
-      '[data-testid="login-view"] .heading',
+      '[data-testid="auth-heading"]',
       '[data-testid="login-view"] .el-input',
       '[data-testid="login-submit"]',
     ].flatMap((selector) =>
@@ -40,7 +40,7 @@ async function leafOverflow(page) {
     const path = document.querySelector('[data-testid="main-leaf"] path')
     const inverse = path.getScreenCTM().inverse()
     const elements = document.querySelectorAll(
-      '[data-testid="login-view"] h1, [data-testid="login-view"] .eyebrow, [data-testid="login-view"] .intro, [data-testid="login-view"] label, [data-testid="login-view"] input, [data-testid="login-submit"], .el-form-item__error, [data-testid="login-error"] p, [data-testid="code-notice"], [data-capacity-probe]',
+      '[data-testid="auth-heading"] h1, [data-testid="auth-heading"] .eyebrow, [data-testid="auth-heading"] .intro, [data-testid="login-view"] label, [data-testid="login-view"] input, [data-testid="login-submit"], .el-form-item__error, [data-testid="login-error"] p, [data-testid="code-notice"], [data-capacity-probe]',
     )
     return [...elements]
       .filter((element) => {
@@ -148,7 +148,6 @@ for (const viewport of [
       await page.evaluate(() => {
         for (const [selector, text] of [
           ['.password-assist-space', '忘记密码？'],
-          ['.account-navigation-space', '还没有账号？点这里'],
         ]) {
           const parent = document.querySelector(selector)
           if (!parent) continue

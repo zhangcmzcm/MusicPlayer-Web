@@ -1,4 +1,10 @@
 export const errorMessages = {
+  USERNAME_ALREADY_EXISTS: '该用户名已被使用，请更换用户名。',
+  EMAIL_ALREADY_EXISTS: '该邮箱已被使用，请更换邮箱或尝试登录。',
+  USER_ALREADY_EXISTS: '账户信息已被使用，请检查后重试。',
+  EMAIL_CODE_INVALID: '验证码无效或已过期，请重新获取。',
+  EMAIL_CODE_ALREADY_USED: '验证码已被使用，请重新获取。',
+  EMAIL_CODE_ATTEMPTS_EXCEEDED: '验证码错误次数达到限制，请重新获取。',
   VALIDATION_FAILED: '请检查填写的信息后重试。',
   INVALID_CREDENTIALS: '登录信息不正确，请检查后重试。',
   LOGIN_TICKET_INVALID: '身份选择已过期，请重新登录。',

@@ -8,6 +8,7 @@ import { getErrorMessage } from '../../utils/errors.js'
 import { resolveSafeRedirect } from '../../utils/redirect.js'
 import LoginForm from '../../components/auth/LoginForm.vue'
 import RoleSelection from '../../components/auth/RoleSelection.vue'
+import { useAuthFlowStore } from '../../stores/authFlow.js'
 
 const auth = useAuthStore(),
   router = useRouter(),
@@ -28,8 +29,9 @@ const {
   sendRemaining,
   loginRemaining,
 } = flow
-const formRef = ref(),
-  titleRef = ref()
+const formRef = ref()
+const registered = useAuthFlowStore().takeRegistrationSuccess()
+if (registered) flow.prefillRegisteredUsername(registered.username)
 const title = computed(() =>
   step.value === 'role-selection'
     ? '此刻，以何种身份'
@@ -57,11 +59,27 @@ watch(
     }
     if (previous) {
       await nextTick()
-      titleRef.value?.focus()
+      scene.focusHeading?.()
     }
   },
   { immediate: true },
 )
+watch(
+  [title, intro],
+  () => {
+    scene.heading = {
+      title: title.value,
+      intro: intro.value,
+      eyebrow: 'A LITTLE FRESH AIR',
+      testId: 'login-title',
+    }
+  },
+  { immediate: true },
+)
+const registerTarget = computed(() => {
+  const redirect = resolveSafeRedirect(router, route.query.redirect)
+  return { name: 'register', query: redirect ? { redirect } : {} }
+})
 function updateForm(value) {
   Object.assign(form, value)
 }
@@ -73,14 +91,15 @@ function updateForm(value) {
     :class="{ 'role-view': step === 'role-selection' }"
     data-testid="login-view"
   >
-    <div class="heading">
-      <div class="eyebrow">A LITTLE FRESH AIR</div>
-      <h1 ref="titleRef" tabindex="-1" data-testid="login-title">
-        {{ title }}
-      </h1>
-      <p class="intro">{{ intro }}</p>
-    </div>
     <div class="feedback-space">
+      <p
+        v-if="registered"
+        class="code-notice"
+        role="status"
+        data-testid="registration-success"
+      >
+        注册成功，请使用新账号登录。
+      </p>
       <div
         v-if="safeError"
         class="feedback"
@@ -113,6 +132,7 @@ function updateForm(value) {
         :sending="sending"
         :send-remaining="sendRemaining"
         :login-remaining="loginRemaining"
+        :register-target="registerTarget"
         @update:model-value="updateForm"
         @method-changed="flow.changeMethod"
         @submit="flow.submit(formRef)"
@@ -148,9 +168,6 @@ function updateForm(value) {
 </template>
 
 <style scoped>
-.heading {
-  padding-left: 48px;
-}
 .feedback-space {
   min-height: 86px;
   padding-top: 4px;
@@ -162,38 +179,6 @@ function updateForm(value) {
 .step-content-enter-from,
 .step-content-leave-to {
   opacity: 0;
-}
-.eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 9px;
-  letter-spacing: 2.7px;
-  color: var(--green-action);
-}
-.eyebrow::before {
-  content: '';
-  width: 22px;
-  height: 1px;
-  background: #97b47c;
-}
-h1 {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: 35px;
-  letter-spacing: 3px;
-  line-height: 1.5;
-  margin: 0;
-}
-h1:focus {
-  outline: none;
-}
-.intro {
-  font-size: 12px;
-  letter-spacing: 1px;
-  line-height: 1.8;
-  color: var(--ink-muted);
-  margin: 0;
 }
 .feedback {
   font-size: 13px;
@@ -216,21 +201,11 @@ h1:focus {
   color: var(--green-action);
   margin: 4px 0 0;
 }
-.role-view .heading {
-  padding-left: 0;
-  text-align: center;
-}
 .role-view .feedback-space {
   min-height: 90px;
 }
-.role-view .eyebrow {
-  justify-content: center;
-}
 .role-view .feedback {
   text-align: center;
-}
-.role-view .intro {
-  margin-bottom: 0;
 }
 .success {
   padding: 20px 0;
@@ -246,26 +221,12 @@ h1:focus {
   color: var(--ink-muted);
 }
 @media (max-width: 600px) {
-  .heading {
-    padding-left: 12px;
-  }
   .feedback-space {
     min-height: 64px;
   }
   .feedback {
     font-size: 12px;
     line-height: 18px;
-  }
-  h1 {
-    font-size: clamp(24px, 7vw, 31px);
-    letter-spacing: 2px;
-  }
-  .eyebrow {
-    font-size: 8px;
-    letter-spacing: 2px;
-  }
-  .intro {
-    font-size: 11px;
   }
 }
 </style>

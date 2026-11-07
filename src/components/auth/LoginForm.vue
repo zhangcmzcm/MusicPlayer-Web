@@ -3,6 +3,7 @@ import { computed, nextTick, ref, useId, watch } from 'vue'
 import { loginMethods } from '../../composables/useLogin.js'
 
 const props = defineProps({
+  registerTarget: { type: Object, default: () => ({ name: 'register' }) },
   modelValue: { type: Object, required: true },
   loginType: { type: String, required: true },
   rules: { type: Object, required: true },
@@ -252,13 +253,18 @@ defineExpose({ validate, validateEmail })
         </div>
       </div>
     </div>
-    <div class="account-navigation-space" aria-hidden="true"></div>
+    <div class="account-navigation-space">
+      <RouterLink :to="registerTarget">还没有账号？去注册</RouterLink>
+    </div>
   </el-form>
 </template>
 
 <style scoped>
 .floating-field {
   position: relative;
+}
+.floating-field + .floating-field {
+  margin-top: 12px;
 }
 .password-toggle {
   display: grid;
@@ -337,6 +343,17 @@ defineExpose({ validate, validateEmail })
 }
 .account-navigation-space {
   text-align: center;
+}
+.account-navigation-space a {
+  color: var(--green-action);
+  text-decoration: none;
+}
+.account-navigation-space a:hover {
+  text-decoration: underline;
+}
+.account-navigation-space a:focus-visible {
+  outline: 2px solid var(--green-action);
+  outline-offset: 3px;
 }
 .alternatives-space {
   min-height: 34px;

@@ -21,7 +21,7 @@ export function resolveSafeRedirect(router, candidate) {
   const target = router.resolve(candidate)
   if (
     !target.matched.length ||
-    ['login', 'not-found'].includes(target.name) ||
+    ['login', 'register', 'not-found'].includes(target.name) ||
     target.redirectedFrom ||
     target.matched.some((record) => record.redirect)
   )

@@ -2,11 +2,10 @@ import { beforeEach, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
-import { reactive } from 'vue'
 import ElementPlus from 'element-plus'
 import LoginView from './LoginView.vue'
+import AuthScene from '../../components/auth/AuthScene.vue'
 import { useAuthStore } from '../../stores/auth.js'
-import { authSceneKey } from '../../composables/authScene.js'
 import * as api from '../../api/auth.js'
 import { authenticated, deferred, ticket } from '../../test/factories.js'
 import { ApiError } from '../../utils/errors.js'
@@ -20,19 +19,24 @@ async function setup() {
   const pinia = createPinia()
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/login', name: 'login', component: LoginView }],
+    routes: [
+      { path: '/login', name: 'login', component: LoginView },
+      {
+        path: '/register',
+        name: 'register',
+        component: { template: '<div />' },
+      },
+    ],
   })
   await router.push('/login')
-  const scene = reactive({ step: 'login' })
-  const wrapper = mount(LoginView, {
+  const wrapper = mount(AuthScene, {
     attachTo: document.body,
     global: {
       plugins: [pinia, router, ElementPlus],
-      provide: { [authSceneKey]: scene },
     },
   })
   await flushPromises()
-  return { wrapper, auth: useAuthStore(pinia), scene }
+  return { wrapper, auth: useAuthStore(pinia), scene: wrapper.vm.scene }
 }
 async function fill(
   wrapper,

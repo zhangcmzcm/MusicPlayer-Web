@@ -1,12 +1,56 @@
 <script setup>
-import { provide, reactive, onUnmounted } from 'vue'
-import { RouterView } from 'vue-router'
+import { provide, reactive, onUnmounted, ref, watch, nextTick } from 'vue'
+import {
+  RouterView,
+  useRoute,
+  useRouter,
+  onBeforeRouteUpdate,
+  isNavigationFailure,
+  NavigationFailureType,
+} from 'vue-router'
 import { authSceneKey } from '../../composables/authScene.js'
 import LeafArtwork from './LeafArtwork.vue'
+import { useAuthSceneTransition } from '../../composables/useAuthSceneTransition.js'
+import { useAuthFlowStore } from '../../stores/authFlow.js'
 
-const scene = reactive({ step: 'login' })
+const route = useRoute()
+const router = useRouter()
+const shared = useAuthFlowStore()
+const titleRef = ref()
+const leafRef = ref()
+const { transitioning, prepareNavigation, finishAtCurrentRoute } =
+  useAuthSceneTransition({ route, leafRef })
+onBeforeRouteUpdate((to) => prepareNavigation(to.name))
+const removeAfterHook = router.afterEach((to, from, failure) => {
+  if (isNavigationFailure(failure, NavigationFailureType.aborted))
+    finishAtCurrentRoute()
+})
+const removeErrorHook = router.onError(finishAtCurrentRoute)
+const scene = reactive({
+  step: 'login',
+  heading: null,
+  focusHeading: () => titleRef.value?.focus(),
+})
+const isRegistration = ref(route.name === 'register')
+watch(
+  () => route.name,
+  async (name) => {
+    isRegistration.value = name === 'register'
+    await nextTick()
+    if (!transitioning.value) scene.focusHeading()
+  },
+)
+watch(transitioning, async (value) => {
+  if (!value) {
+    await nextTick()
+    scene.focusHeading()
+  }
+})
 provide(authSceneKey, scene)
 onUnmounted(() => {
+  removeAfterHook()
+  removeErrorHook()
+  shared.clearHandoff()
   scene.step = 'login'
 })
 </script>
@@ -14,7 +58,11 @@ onUnmounted(() => {
 <template>
   <div
     class="auth-scene"
-    :class="{ 'choosing-role': scene.step === 'role-selection' }"
+    :class="{
+      'choosing-role': scene.step === 'role-selection',
+      'registration-scene': isRegistration,
+      'scene-transitioning': transitioning,
+    }"
     data-testid="auth-scene"
   >
     <header class="masthead">
@@ -67,11 +115,27 @@ onUnmounted(() => {
       </g>
     </svg>
     <div class="small-leaves" aria-hidden="true">
-      <LeafArtwork /><LeafArtwork /><LeafArtwork />
+      <LeafArtwork :tint="isRegistration ? '#dce8c7' : '#ffffff'" /><LeafArtwork
+        :tint="isRegistration ? '#dce8c7' : '#ffffff'"
+      /><LeafArtwork :tint="isRegistration ? '#dce8c7' : '#ffffff'" />
     </div>
     <main class="scene-main">
-      <LeafArtwork class="main-leaf" data-testid="main-leaf" />
-      <div class="scene-content"><RouterView /></div>
+      <LeafArtwork ref="leafRef" class="main-leaf" data-testid="main-leaf" />
+      <div class="scene-content" :inert="transitioning">
+        <div
+          v-if="scene.heading"
+          class="heading"
+          :class="{ 'role-heading': scene.step === 'role-selection' }"
+          data-testid="auth-heading"
+        >
+          <div class="eyebrow">{{ scene.heading.eyebrow }}</div>
+          <h1 ref="titleRef" tabindex="-1" :data-testid="scene.heading.testId">
+            {{ scene.heading.title }}
+          </h1>
+          <p class="intro">{{ scene.heading.intro }}</p>
+        </div>
+        <RouterView />
+      </div>
     </main>
     <aside class="poem" data-testid="scene-poem" aria-hidden="true">
       <span>一叶清新</span><span>一曲自在</span>
@@ -138,6 +202,81 @@ onUnmounted(() => {
   width: 340px;
   margin-left: calc(38% - 170px);
   padding: max(160px, calc(160px + (100svh - 768px) * 0.2)) 0 4px;
+}
+.scene-content,
+.poem {
+  transition: opacity 180ms ease;
+}
+.scene-transitioning .scene-content,
+.scene-transitioning .poem {
+  opacity: 0;
+  pointer-events: none;
+}
+.scene-transitioning .wind g {
+  animation-duration: 2s;
+}
+.registration-scene .main-leaf {
+  left: 62%;
+  top: -400px;
+  height: max(1400px, calc(1400px + (100svh - 768px) * 0.4));
+  transform: translateX(-50%) scaleX(-1);
+}
+.registration-scene .scene-content {
+  margin-left: calc(62% - 170px);
+  padding-top: max(24px, calc(24px + (100svh - 768px) * 0.2));
+}
+.registration-scene .poem {
+  left: min(24%, calc(62% - 600px));
+}
+.heading {
+  padding-left: 48px;
+}
+.registration-scene .heading {
+  padding-left: 12px;
+}
+.registration-scene h1 {
+  font-size: 32px;
+  letter-spacing: 1px;
+  line-height: 1.35;
+}
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 9px;
+  letter-spacing: 2.7px;
+  color: var(--green-action);
+}
+.eyebrow::before {
+  content: '';
+  width: 22px;
+  height: 1px;
+  background: #97b47c;
+}
+h1 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 35px;
+  letter-spacing: 3px;
+  line-height: 1.5;
+  margin: 0;
+}
+h1:focus {
+  outline: none;
+}
+.intro {
+  font-size: 12px;
+  letter-spacing: 1px;
+  line-height: 1.8;
+  color: var(--ink-muted);
+  margin: 0;
+}
+.role-heading {
+  padding-left: 0;
+  text-align: center;
+}
+.role-heading .eyebrow {
+  justify-content: center;
 }
 .poem {
   position: absolute;
@@ -235,10 +374,12 @@ onUnmounted(() => {
   }
 }
 @media (max-width: 1050px) {
-  .main-leaf {
+  .main-leaf,
+  .registration-scene .main-leaf {
     left: 50%;
   }
-  .scene-content {
+  .scene-content,
+  .registration-scene .scene-content {
     margin: auto;
   }
   .poem {
@@ -263,15 +404,71 @@ onUnmounted(() => {
   }
   .main-leaf {
     width: 950px;
-    top: -220px;
-    height: 1080px;
+    top: -300px;
+    height: 1180px;
   }
   .scene-main {
     min-height: 100svh;
   }
   .scene-content {
     width: min(300px, calc(100% - 64px));
-    padding: 112px 0 20px;
+    padding: 78px 0 20px;
+  }
+  .registration-scene .scene-content {
+    padding-top: 64px;
+    padding-bottom: 12px;
+  }
+  .registration-scene .main-leaf {
+    top: -350px;
+    height: 1400px;
+  }
+  .heading {
+    padding-left: 0;
+    position: absolute;
+    top: 24px;
+    right: 0;
+  }
+  h1 {
+    font-size: 18px;
+    letter-spacing: 0;
+    line-height: 28px;
+  }
+  .registration-scene h1 {
+    font-size: 18px;
+    letter-spacing: 0;
+    line-height: 28px;
+  }
+  .registration-scene .heading {
+    padding-left: 0;
+  }
+  .registration-scene .small-leaves {
+    z-index: 1;
+  }
+  .registration-scene .small-leaves svg:nth-child(1) {
+    width: 88px;
+    height: 120px;
+    left: -55px;
+    top: 85px;
+  }
+  .registration-scene .small-leaves svg:nth-child(2) {
+    width: 88px;
+    height: 120px;
+    right: -55px;
+    top: 15%;
+  }
+  .registration-scene .small-leaves svg:nth-child(3) {
+    width: 45px;
+    height: 60px;
+    right: -20px;
+    bottom: 0;
+  }
+  .eyebrow,
+  .intro {
+    display: none;
+  }
+  .role-heading {
+    position: static;
+    margin-bottom: 8px;
   }
   .choosing-role .scene-content {
     padding: 125px 20px 70px;

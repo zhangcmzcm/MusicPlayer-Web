@@ -16,6 +16,11 @@ export function createAppRouter(auth) {
             name: 'login',
             component: () => import('../views/login/LoginView.vue'),
           },
+          {
+            path: 'register',
+            name: 'register',
+            component: () => import('../views/register/RegisterView.vue'),
+          },
         ],
       },
       {
