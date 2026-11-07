@@ -174,22 +174,25 @@ it.each(['NETWORK_ERROR', 'TIMEOUT', 'CANCELLED'])(
   },
 )
 
-it('should_not_call_api_for_invalid_forms_and_convert_unexpected_client_failure', async () => {
-  const { flow, scope } = setup()
-  const invalid = {
-    validate: async () => false,
-    validateEmail: async () => false,
-  }
-  await flow.submit(invalid)
-  await flow.sendCode(invalid)
-  expect(api.registerUser).not.toHaveBeenCalled()
-  expect(api.sendRegistrationCode).not.toHaveBeenCalled()
-  api.registerUser.mockRejectedValue(new Error('private failure'))
-  await flow.submit(validForm)
-  expect(flow.error.value.code).toBe('CLIENT_ERROR')
-  expect(flow.error.value.message).not.toContain('private failure')
-  scope.stop()
-})
+it.each([new Error('private failure'), null, undefined, 'private failure'])(
+  'should_not_call_api_for_invalid_forms_and_convert_unexpected_client_failure_%s',
+  async (failure) => {
+    const { flow, scope } = setup()
+    const invalid = {
+      validate: async () => false,
+      validateEmail: async () => false,
+    }
+    await flow.submit(invalid)
+    await flow.sendCode(invalid)
+    expect(api.registerUser).not.toHaveBeenCalled()
+    expect(api.sendRegistrationCode).not.toHaveBeenCalled()
+    api.registerUser.mockRejectedValue(failure)
+    await flow.submit(validForm)
+    expect(flow.error.value.code).toBe('CLIENT_ERROR')
+    expect(flow.error.value.message).not.toContain('private failure')
+    scope.stop()
+  },
+)
 
 it('should_distinguish_send_failure_and_keep_ip_limit_and_submit_limit', async () => {
   vi.useFakeTimers()

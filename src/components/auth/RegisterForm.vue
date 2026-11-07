@@ -12,7 +12,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'submit', 'send-code'])
 const formRef = ref()
 const formId = useId()
-const fields = computed(() => [
+const fields = [
   { name: 'username', label: '用户名', autocomplete: 'username' },
   {
     name: 'password',
@@ -32,10 +32,11 @@ const fields = computed(() => [
     autocomplete: 'email',
     optional: true,
   },
-  ...(props.modelValue.email.length
-    ? [{ name: 'code', label: '邮箱验证码', autocomplete: 'one-time-code' }]
-    : []),
-])
+  { name: 'code', label: '邮箱验证码', autocomplete: 'one-time-code' },
+]
+const lastField = computed(() =>
+  props.modelValue.email.length ? 'code' : 'email',
+)
 function update(field, value) {
   emit('update:modelValue', { ...props.modelValue, [field]: value })
 }
@@ -79,6 +80,10 @@ watch(
   },
 )
 defineExpose({ validate, validateEmail })
+function measureField(element, leaving) {
+  element.inert = leaving
+  element.style.setProperty('--field-height', `${element.scrollHeight}px`)
+}
 </script>
 
 <template>
@@ -97,15 +102,22 @@ defineExpose({ validate, validateEmail })
       ($event.isComposing || $event.keyCode === 229) && $event.preventDefault()
     "
   >
-    <TransitionGroup name="registration-field">
+    <Transition
+      v-for="field in fields"
+      :key="field.name"
+      name="registration-field"
+      :duration="220"
+      @enter="measureField($event, false)"
+      @before-leave="measureField($event, true)"
+    >
       <el-form-item
-        v-for="(field, index) in fields"
-        :key="field.name"
+        v-if="field.name !== 'code' || modelValue.email.length"
         :prop="field.name"
+        :data-testid="`register-field-${field.name}`"
         class="floating-field"
         :class="{
           'has-value': modelValue[field.name].length,
-          'last-field': index === fields.length - 1,
+          'last-field': field.name === lastField,
         }"
       >
         <template #label
@@ -174,7 +186,7 @@ defineExpose({ validate, validateEmail })
           </div></template
         >
       </el-form-item>
-    </TransitionGroup>
+    </Transition>
     <p class="email-help">
       {{
         modelValue.email.length
@@ -291,12 +303,16 @@ defineExpose({ validate, validateEmail })
 }
 .registration-field-enter-active,
 .registration-field-leave-active {
+  height: var(--field-height);
+  overflow: hidden;
   transition:
+    height 180ms,
     opacity 180ms,
     transform 180ms;
 }
 .registration-field-enter-from,
 .registration-field-leave-to {
+  height: 0;
   opacity: 0;
   transform: translateY(-6px);
 }

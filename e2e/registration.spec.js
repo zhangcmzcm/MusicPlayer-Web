@@ -292,3 +292,73 @@ test('should_align_actual_leaf_and_poem_for_both_routes', async ({ page }) => {
     await expect(page.getByTestId('scene-poem')).toHaveText('一叶清新一曲自在')
   }
 })
+
+test('should_expand_code_area_without_resizing_leaf', async ({
+  page,
+}, testInfo) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.goto('/register')
+  const leaf = await page.getByTestId('main-leaf').boundingBox()
+  await page.evaluate(() => {
+    window.fieldTransitionEvents = []
+    for (const type of ['transitionrun', 'transitionend']) {
+      document.addEventListener(type, (event) => {
+        if (
+          event.propertyName === 'height' &&
+          event.target.dataset.testid === 'register-field-code'
+        ) {
+          window.fieldTransitionEvents.push({
+            type,
+            height: event.target.getBoundingClientRect().height,
+          })
+        }
+      })
+    }
+  })
+  await page.getByTestId('register-email').fill('a@example.test')
+  await page.waitForTimeout(400)
+  await testInfo.attach('field-transition-observation', {
+    contentType: 'application/json',
+    body: JSON.stringify(
+      await page.evaluate(() => {
+        const field = document.querySelector(
+          '[data-testid="register-field-code"]',
+        )
+        const style = getComputedStyle(field)
+        return {
+          events: window.fieldTransitionEvents,
+          classes: field.className,
+          inline: field.getAttribute('style'),
+          height: style.height,
+          scrollHeight: field.scrollHeight,
+          transition: style.transition,
+        }
+      }),
+    ),
+  })
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const field = document.querySelector(
+          '[data-testid="register-field-code"]',
+        )
+        return {
+          endCount: window.fieldTransitionEvents.filter(
+            (event) => event.type === 'transitionend',
+          ).length,
+          events: window.fieldTransitionEvents,
+          height: getComputedStyle(field).height,
+          inline: field.getAttribute('style'),
+          classes: field.className,
+        }
+      }),
+    )
+    .toEqual(expect.objectContaining({ endCount: 1 }))
+  const events = await page.evaluate(() => window.fieldTransitionEvents)
+  expect(events[0].height).toBeLessThan(events[1].height)
+  expect(events[1].height).toBeGreaterThanOrEqual(88)
+  expect(await page.getByTestId('main-leaf').boundingBox()).toEqual(leaf)
+  await page.getByTestId('register-email').fill('')
+  await expect(page.getByTestId('register-field-code')).toHaveCount(0)
+  expect(await page.getByTestId('main-leaf').boundingBox()).toEqual(leaf)
+})

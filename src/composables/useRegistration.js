@@ -70,7 +70,7 @@ export function useRegistration() {
     form.code = ''
   }
   function fail(failure, phase) {
-    if (failure.code === 'CANCELLED') return
+    if (failure?.code === 'CANCELLED') return
     error.value =
       failure instanceof ApiError
         ? failure
