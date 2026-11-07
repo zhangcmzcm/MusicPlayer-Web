@@ -1,7 +1,79 @@
 import { expect, it } from 'vitest'
-import { login } from './auth.js'
+import { login, registerUser, sendRegistrationCode } from './auth.js'
 import { http } from './http.js'
 import { authenticated, ticket } from '../test/factories.js'
+
+it.each([undefined, null, {}, { email: null, extension: true }])(
+  'should_accept_registration_without_consuming_profile_%j',
+  async (data) => {
+    const original = http.defaults.adapter
+    const controller = new AbortController()
+    const payload = { username: 'listener', password: ' sample-password ' }
+    http.defaults.adapter = async (config) => {
+      expect(config.url).toBe('/auth/register')
+      expect(config.publicRequest).toBe(true)
+      expect(config.signal).toBe(controller.signal)
+      expect(config.headers.has('Authorization')).toBe(false)
+      expect(JSON.parse(config.data)).toEqual(payload)
+      return { data, status: 201, statusText: 'Created', headers: {}, config }
+    }
+    try {
+      await expect(
+        registerUser(payload, { signal: controller.signal }),
+      ).resolves.toBeUndefined()
+    } finally {
+      http.defaults.adapter = original
+    }
+  },
+)
+
+it.each([200, 204])(
+  'should_reject_unexpected_registration_status_%i',
+  async (status) => {
+    const original = http.defaults.adapter
+    http.defaults.adapter = async (config) => ({
+      data: {},
+      status,
+      headers: {},
+      config,
+    })
+    try {
+      await expect(registerUser({})).rejects.toMatchObject({
+        code: 'INVALID_RESPONSE',
+      })
+    } finally {
+      http.defaults.adapter = original
+    }
+  },
+)
+
+it.each([
+  ['REGISTER', new Date(Date.now() + 300000).toISOString(), true],
+  ['LOGIN', new Date(Date.now() + 300000).toISOString(), false],
+  ['REGISTER', null, false],
+  ['REGISTER', '2020-01-01T00:00:00Z', false],
+])(
+  'should_validate_registration_code_response_%s_%s',
+  async (purpose, expiresAt, valid) => {
+    const original = http.defaults.adapter
+    http.defaults.adapter = async (config) => {
+      expect(JSON.parse(config.data)).toEqual({
+        email: 'a@example.test',
+        purpose: 'REGISTER',
+      })
+      expect(config.publicRequest).toBe(true)
+      return { data: { purpose, expiresAt }, status: 200, headers: {}, config }
+    }
+    try {
+      const result = sendRegistrationCode('a@example.test')
+      if (valid) await expect(result).resolves.toEqual({ purpose, expiresAt })
+      else
+        await expect(result).rejects.toMatchObject({ code: 'INVALID_RESPONSE' })
+    } finally {
+      http.defaults.adapter = original
+    }
+  },
+)
 
 it.each(['USER', 'ADMIN'])(
   'should_accept_%s_role_selection_response_with_null_email',

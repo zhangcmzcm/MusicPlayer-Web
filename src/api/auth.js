@@ -41,3 +41,22 @@ export async function sendLoginCode(email, { signal } = {}) {
     throw invalidResponse()
   return data
 }
+
+export async function registerUser(payload, { signal } = {}) {
+  const response = await http.post('/auth/register', payload, {
+    signal,
+    publicRequest: true,
+  })
+  if (response.status !== 201) throw invalidResponse()
+}
+
+export async function sendRegistrationCode(email, { signal } = {}) {
+  const { data } = await http.post(
+    '/email/send-code',
+    { email, purpose: 'REGISTER' },
+    { signal, publicRequest: true },
+  )
+  if (data?.purpose !== 'REGISTER' || !isFutureInstant(data.expiresAt))
+    throw invalidResponse()
+  return data
+}
