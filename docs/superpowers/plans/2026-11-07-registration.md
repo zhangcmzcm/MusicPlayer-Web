@@ -69,11 +69,11 @@ LeafArtwork.vue 优先复用原 SVG 与外层变换，若实现卷曲确需修�
 
 **共享接口** setup store `useAuthFlowStore()` 提供 `completeRegistration(username)`、`takeRegistrationSuccess() -> { username } | null`、`sendRemaining(purpose, email, now) -> number`、`recordSend(purpose, email, deadline)`、`recordLimit(purpose, email, error, now)`、`clearHandoff()`。邮箱期限按规范化邮箱和用途区分，IP_RATE_LIMIT 共享；未知 scope 沿用现有保守冷却策略。保存绝对期限，页面计时器仅刷新当前时间。
 
-- [ ] **步骤 1 写调用与 store 红测。** 验证无邮箱体仅两字段、有邮箱体保留 code 前导零，publicRequest 和 signal 正确；201 的资料字段缺失、null、未知扩展均不阻断成功，非 201 不返回假成功；REGISTER 发码用途错误、过期或非法时间拒绝，合法响应通过。
-- [ ] **步骤 2 补共享状态测试。** `should_consume_registration_success_only_once` 断言两次读取分别为 `{ username: 'listener' }` 与 null；`should_keep_purpose_limits_separate_and_share_ip_limit` 使用固定时间验证 REGISTER 邮箱冷却不阻断 LOGIN，IP 限流同时阻断两者；切换邮箱后原邮箱期限仍有效，Retry-After 为 0、缺失或非法值按既有语义处理。断言不写 storage、不改变 auth.session。
-- [ ] **步骤 3 运行红测。** 执行 `npm run test:unit -- src/api/auth.spec.js src/stores/authFlow.spec.js`，记录未实现接口导致的失败。
-- [ ] **步骤 4 最小实现。** 在 auth.js 增加两个公开调用与必要错误处理，新增 authFlow store。成功交接仅保存用户名，不保存密码、验证码或完整响应。限流期限在登录注册切换时保留，过期期限在访问或更新时清理，避免长期累积邮箱记录。注册失败不写成功交接。
-- [ ] **步骤 5 验证并提交。** 重跑步骤 3 至全绿，执行 `npm run lint`，显式添加本任务文件，提交 `feat: 添加公开注册调用与认证流程内存状态`。
+- [x] **步骤 1 写调用与 store 红测。** 验证无邮箱体仅两字段、有邮箱体保留 code 前导零，publicRequest 和 signal 正确；201 的资料字段缺失、null、未知扩展均不阻断成功，非 201 不返回假成功；REGISTER 发码用途错误、过期或非法时间拒绝，合法响应通过。
+- [x] **步骤 2 补共享状态测试。** `should_consume_registration_success_only_once` 断言两次读取分别为 `{ username: 'listener' }` 与 null；`should_keep_purpose_limits_separate_and_share_ip_limit` 使用固定时间验证 REGISTER 邮箱冷却不阻断 LOGIN，IP 限流同时阻断两者；切换邮箱后原邮箱期限仍有效，Retry-After 为 0、缺失或非法值按既有语义处理。断言不写 storage、不改变 auth.session。
+- [x] **步骤 3 运行定向测试并记录实际红绿结果。** 执行 `npm run test:unit -- src/api/auth.spec.js src/stores/authFlow.spec.js`，记录未实现接口导致的失败。
+- [x] **步骤 4 最小实现。** 在 auth.js 增加两个公开调用与必要错误处理，新增 authFlow store。成功交接仅保存用户名，不保存密码、验证码或完整响应。限流期限在登录注册切换时保留，过期期限在访问或更新时清理，避免长期累积邮箱记录。注册失败不写成功交接。
+- [x] **步骤 5 验证并提交。** 重跑步骤 3 至全绿，执行 `npm run lint`，显式添加本任务文件，提交 `feat: 添加公开注册调用与认证流程内存状态`。
 
 ## 任务 2 完成注册表单与手机容量验收
 
@@ -83,13 +83,13 @@ LeafArtwork.vue 优先复用原 SVG 与外层变换，若实现卷曲确需修�
 
 **场景标题接口** 沿用 authSceneKey 的 scene.step，增加 `scene.heading = { title, eyebrow, intro, testId }` 和 `scene.focusHeading()`。AuthScene 统一渲染可聚焦标题与手机品牌同行，子页面提供内容，避免手机和桌面重复可访问标题。LoginView 移交现有标题内容、状态与聚焦调用，测试挂载真实场景验证。
 
-- [ ] **步骤 1 写校验与表单红测。** 用户名长度 2/3/20/21、非法字符；密码长度 7/8/72/73、全空格、非 ASCII、制表符、前后空格保留；确认密码不一致阻断并在原密码修改后重新校验。邮箱空、仅空白、非法、120/121 字符、合法但缺码、码为 012345 均按设计断言实际请求或阻断。
-- [ ] **步骤 2 写生命周期和错误红测。** 500/503/其他 5xx、断网、超时均在注册阶段显示原错误和结果未知提示；发码失败没有注册未知提示。覆盖各契约冲突、验证码错误和限流，取消静默。延迟发码后改邮箱、清邮箱、离开注册，旧响应不能恢复提示；提交和发码重复点击各只调用一次 API。用假时钟验证 60 秒发送冷却及 300 秒有效期提示到期。
-- [ ] **步骤 3 运行红测。** 执行 `npm run test:unit -- src/composables/useRegistration.spec.js src/components/auth/RegisterForm.spec.js src/views/register/RegisterView.spec.js src/views/login/LoginView.spec.js src/components/auth/AuthScene.spec.js`，确认断言失败原因后实现。
-- [ ] **步骤 4 完成实际注册路径。** 新增 useRegistration、RegisterForm、RegisterView，接入真正 `/register` 子路由；邮箱有内容才渲染验证码。复用 Element Plus 的 label/input 关联和错误 ID，必填星号同时有表单 required 语义。两个密码显隐按钮名称分别说明密码与确认密码，自动填充使用 username、new-password、email、one-time-code 语义。
-- [ ] **步骤 5 接入共享标题与稳定几何。** AuthScene 集中标题展示，桌面保留原标题组与位置，手机隐藏英文与副文案、品牌和主标题同行。注册稳定右侧白叶用外层翻转得到左倾叶脉，表单独立正向。紧凑间距和错误预留在注册组件内控制，保留输入可操作尺寸。修改 errors 映射，只展示安全稳定文案。
-- [ ] **步骤 6 前置浏览器容量门槛。** 新增注册容量 e2e，在 320×740、390×844、1366×768 验证实际五字段、逐字段两行错误、两行接口反馈加一行发码通知、按钮及返回登录文字。接口反馈由 mock 错误产生，字段错误由真实校验产生；若某组合需要强制填充容量，注入仅在测试 DOM 中，清楚标记并在刷新后消失。断言无横纵溢出、白叶不因展开和反馈伸缩，内容在实际 SVG 轮廓内。保存并查看截图，先解决容量再开展复杂翻面。
-- [ ] **步骤 7 验证并提交。** 执行步骤 3 命令、`npm run test:e2e -- e2e/registration.spec.js --grep capacity`、`npm run lint`。若容量门槛无法通过，记录测量并停在该门槛等待人类决定。通过后按实际文件显式提交 `feat: 实现可选邮箱注册与紧凑手机布局`。
+- [x] **步骤 1 补齐校验与表单用例。** 用户名长度 2/3/20/21、非法字符；密码长度 7/8/72/73、全空格、非 ASCII、制表符、前后空格保留；确认密码不一致阻断并在原密码修改后重新校验。邮箱空、仅空白、非法、120/121 字符、合法但缺码、码为 012345 均按设计断言实际请求或阻断。
+- [x] **步骤 2 写生命周期和错误红测。** 500/503/其他 5xx、断网、超时均在注册阶段显示原错误和结果未知提示；发码失败没有注册未知提示。覆盖各契约冲突、验证码错误和限流，取消静默。延迟发码后改邮箱、清邮箱、离开注册，旧响应不能恢复提示；提交和发码重复点击各只调用一次 API。用假时钟验证 60 秒发送冷却及 300 秒有效期提示到期。
+- [x] **步骤 3 运行定向测试并记录实际红绿结果。** 执行 `npm run test:unit -- src/composables/useRegistration.spec.js src/components/auth/RegisterForm.spec.js src/views/register/RegisterView.spec.js src/views/login/LoginView.spec.js src/components/auth/AuthScene.spec.js`，确认断言失败原因后实现。
+- [x] **步骤 4 完成实际注册路径。** 新增 useRegistration、RegisterForm、RegisterView，接入真正 `/register` 子路由；邮箱有内容才渲染验证码。复用 Element Plus 的 label/input 关联和错误 ID，必填星号同时有表单 required 语义。两个密码显隐按钮名称分别说明密码与确认密码，自动填充使用 username、new-password、email、one-time-code 语义。
+- [x] **步骤 5 接入共享标题与稳定几何。** AuthScene 集中标题展示，桌面保留原标题组与位置，手机隐藏英文与副文案、品牌和主标题同行。注册稳定右侧白叶用外层翻转得到左倾叶脉，表单独立正向。紧凑间距和错误预留在注册组件内控制，保留输入可操作尺寸。修改 errors 映射，只展示安全稳定文案。
+- [x] **步骤 6 前置浏览器容量门槛。** 新增注册容量 e2e，在 320×740、390×844、1366×768 验证实际五字段、逐字段两行错误、两行接口反馈加一行发码通知、按钮及返回登录文字。接口反馈由 mock 错误产生，字段错误由真实校验产生；若某组合需要强制填充容量，注入仅在测试 DOM 中，清楚标记并在刷新后消失。断言无横纵溢出、白叶不因展开和反馈伸缩，内容在实际 SVG 轮廓内。保存并查看截图，先解决容量再开展复杂翻面。
+- [x] **步骤 7 验证并提交。** 执行步骤 3 命令、`npm run test:e2e -- e2e/registration.spec.js --grep capacity`、`npm run lint`。若容量门槛无法通过，记录测量并停在该门槛等待人类决定。通过后按实际文件显式提交 `feat: 实现可选邮箱注册与紧凑手机布局`。
 
 ## 任务 3 接入双向链接、成功交接与共享翻面
 
@@ -97,28 +97,39 @@ LeafArtwork.vue 优先复用原 SVG 与外层变换，若实现卷曲确需修�
 
 **登录接口** `useLogin(auth)` 保留现有返回值，增加 `prefillRegisteredUsername(username)`，切至 USERNAME_PASSWORD 并清敏感输入、旧错误和票据；LoginView 消费一次性注册交接、展示成功 status。发码期限调用任务 1 store，保留原有登录冷却、Ticket、session 与错误语义。
 
-- [ ] **步骤 1 写导航与回跳红测。** 注册 201 后 auth.session 未建立，跳转 login、用户名预填、密码空、成功提示出现；刷新或再次进入不重放交接；普通去登录不预填。resolveSafeRedirect 拒绝 `/register`、`/login`、认证入口和其查询／编码形态，已存在安全目标继续可用，非法或未知目标丢弃。若当前无真实受保护业务路由，成功回跳测试使用内存 router 测试路由。
-- [ ] **步骤 2 写场景与转场红测。** 直接打开注册稳定右侧、打开登录稳定左侧；两页共用同一 AuthScene 和主叶节点。双向导航、历史返回、动画未完成再次导航、导航拒绝、场景卸载、减少动态设置中途变化后，最终姿态与当前路由一致，焦点在当前标题，离场输入不可聚焦。旧注册响应在取消后不生成成功交接。
-- [ ] **步骤 3 运行红测。** 执行 `npm run test:unit -- src/router/index.spec.js src/composables/useAuthSceneTransition.spec.js src/components/auth/AuthScene.spec.js src/composables/useLogin.spec.js src/views/login/LoginView.spec.js src/views/register/RegisterView.spec.js`。
-- [ ] **步骤 4 实现导航与交接。** LoginForm 增加可用 RouterLink 和安全 redirect 的受控目标 prop，RegisterView 提供返回登录链接。成功时写一次性交接并 replace 到登录，保留经过安全校验的 redirect。普通切换不持久化表单。更新 redirect 排除规则，不改全局 401 策略。
-- [ ] **步骤 5 完成动画。** 风线增强与内容淡出，白叶斜向飘移翻面、卷曲阴影、减速轻回摆、目标内容淡入，完整参考约 2.6 秒。注册与登录表单不接受叶片镜像变换。转场后允许交互，减少动态时直接稳定或短淡入。复用用户已确认样片的运动方向，自主微调已确认范围内的时序。
-- [ ] **步骤 6 处理取消与历史。** 动画完成回调核对当前路由和本轮动画编号；路由拒绝不提交错误姿态。卸载取消动画与请求并清交接，内存冷却期限按有效期保留。清除旧身份选择状态，不使已认证会话因注册导航被机械清除。注册返回失败时不丢失尚未消费的用户名交接。
-- [ ] **步骤 7 联合验证并提交。** 任务 1 至 3 单元测试通过；新增 mock e2e `should_register_without_email_and_return_to_username_login`、`should_register_with_email_and_preserve_leading_zero`、`should_keep_scene_during_navigation_and_history`、`should_share_ip_limit_across_auth_pages`，断言请求、URL、表单、节点身份与焦点。执行 `npm run test:e2e -- e2e/registration.spec.js` 和 lint，通过后提交 `feat: 接入登录注册导航与共享树叶翻面`。
+- [x] **步骤 1 补齐导航与回跳用例。** 注册 201 后 auth.session 未建立，跳转 login、用户名预填、密码空、成功提示出现；刷新或再次进入不重放交接；普通去登录不预填。resolveSafeRedirect 拒绝 `/register`、`/login`、认证入口和其查询／编码形态，已存在安全目标继续可用，非法或未知目标丢弃。若当前无真实受保护业务路由，成功回跳测试使用内存 router 测试路由。
+- [x] **步骤 2 补齐场景与转场用例。** 直接打开注册稳定右侧、打开登录稳定左侧；两页共用同一 AuthScene 和主叶节点。双向导航、历史返回、动画未完成再次导航、导航拒绝、场景卸载、减少动态设置中途变化后，最终姿态与当前路由一致，焦点在当前标题，离场输入不可聚焦。旧注册响应在取消后不生成成功交接。
+- [x] **步骤 3 运行定向测试并记录实际红绿结果。** 执行 `npm run test:unit -- src/router/index.spec.js src/composables/useAuthSceneTransition.spec.js src/components/auth/AuthScene.spec.js src/composables/useLogin.spec.js src/views/login/LoginView.spec.js src/views/register/RegisterView.spec.js`。
+- [x] **步骤 4 实现导航与交接。** LoginForm 增加可用 RouterLink 和安全 redirect 的受控目标 prop，RegisterView 提供返回登录链接。成功时写一次性交接并 replace 到登录，保留经过安全校验的 redirect。普通切换不持久化表单。更新 redirect 排除规则，不改全局 401 策略。
+- [x] **步骤 5 完成动画。** 风线增强与内容淡出，白叶斜向飘移翻面、卷曲阴影、减速轻回摆、目标内容淡入，完整参考约 2.6 秒。注册与登录表单不接受叶片镜像变换。转场后允许交互，减少动态时直接稳定或短淡入。复用用户已确认样片的运动方向，自主微调已确认范围内的时序。
+- [x] **步骤 6 处理取消与历史。** 动画完成回调核对当前路由和本轮动画编号；路由拒绝不提交错误姿态。卸载取消动画与请求并清交接，内存冷却期限按有效期保留。清除旧身份选择状态，不使已认证会话因注册导航被机械清除。注册返回失败时不丢失尚未消费的用户名交接。
+- [x] **步骤 7 联合验证并提交。** 任务 1 至 3 单元测试通过；新增 mock e2e `should_register_without_email_and_return_to_username_login`、`should_register_with_email_and_preserve_leading_zero`、`should_keep_scene_during_navigation_and_history`、`should_share_ip_limit_across_auth_pages`，断言请求、URL、表单、节点身份与焦点。执行 `npm run test:e2e -- e2e/registration.spec.js` 和 lint，通过后提交 `feat: 接入登录注册导航与共享树叶翻面`。
 
 ## 任务 4 全面回归、视觉复核与审核交付
 
 **接口** 使用现有 npm scripts 与 Playwright webServer 配置，继续由运行器启动 4173。测试中复用现有 fixtures，不访问真实业务后端。修改测试选择器时保留原行为断言，标题移出 LoginView 后仍需参与几何测量。
 
-- [ ] **步骤 1 补齐关联回归。** 将登录 e2e 标题选择器指向实际公共标题，保留三登录方式、管理员 USER/ADMIN、401 语义、会话恢复、IME、防重复与错误恢复断言。测试侧未来找回密码容量探针保留，已有注册文字探针改为断言真实 RouterLink，禁止向已有入口重复注入导航文本。
-- [ ] **步骤 2 检查完整视觉矩阵。** 补 1440×900、1920×1080 注册容量与两端浮动标签、密码显隐、真实标签点击。对白叶左右姿态用实际填充轮廓测几何中心相对视口中线 12% 落点，不能只用 SVG 容器 left 值证明。验证两页竖排内容和位置、小叶片真实可见、标题同行，以及长恢复文案与矮视口的整页可达。
-- [ ] **步骤 3 动态和浏览器实测。** 实际播放并查看完整双向动画，保存必要关键帧或视频，检查中途无文字镜像、背景闪烁和机械直线压扁。减少动态、快速历史导航、键盘焦点同步检查。记录浏览器自动填充、200% 实际缩放的已执行证据，物理手机软键盘无设备则如实记未验证。
-- [ ] **步骤 4 全量命令验证。** 顺序执行 `npm ci`、`npm run check`、`npm run test:unit:coverage -- --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=html`、`npm run test:e2e`。依赖或 Windows 文件占用按实际原因处理，记录命令、退出码、通过／失败／跳过／重试及构建提示，不能以未启动用例代替通过。
-- [ ] **步骤 5 逐文件核对覆盖率。** 对 auth.js、authFlow.js、useRegistration.js、RegisterForm.vue、RegisterView.vue、AuthScene.vue、useAuthSceneTransition.js、useLogin.js、LoginView.vue、LoginForm.vue、redirect.js、errors.js 及实际新增逻辑源文件列完整行／分支比例。router/index.js 等配置或纯声明逐文件给出排除理由与导航替代验证。任何业务文件未达 80%／70% 则补有效行为用例并重跑。
-- [ ] **步骤 6 完成功能文档。** registration.md 记录接口 Method+Path、公开权限、字段行为表、关键组合、错误与结果未知、生命周期、安全交接、视觉决定、实际测试及限制。login.md 仅更新关联变化；本计划记录实际完成项、截图与报告位置。
-- [ ] **步骤 7 自检并提交审核材料。** 执行 `git diff --check`、格式检查、链接存在检查和敏感信息检查，逐项按 AGENTS.md 第九节列变更、校验依据、实际验证、逐文件覆盖率、Git 基线和 NOTE-001/002 处置。显式提交本任务文件，提交 `docs: 记录注册流程与翻面验证`。等待 Claude 对实现切片独立审核，accepted 后由人类决定推送。
+- [x] **步骤 1 补齐关联回归。** 将登录 e2e 标题选择器指向实际公共标题，保留三登录方式、管理员 USER/ADMIN、401 语义、会话恢复、IME、防重复与错误恢复断言。测试侧未来找回密码容量探针保留，已有注册文字探针改为断言真实 RouterLink，禁止向已有入口重复注入导航文本。
+- [x] **步骤 2 检查完整视觉矩阵。** 补 1440×900、1920×1080 注册容量与两端浮动标签、密码显隐、真实标签点击。对白叶左右姿态用实际填充轮廓测几何中心相对视口中线 12% 落点，不能只用 SVG 容器 left 值证明。验证两页竖排内容和位置、小叶片真实可见、标题同行，以及长恢复文案与矮视口的整页可达。
+- [x] **步骤 3 动态和浏览器实测。** 实际播放并查看完整双向动画，保存必要关键帧或视频，检查中途无文字镜像、背景闪烁和机械直线压扁。减少动态、快速历史导航、键盘焦点同步检查。记录浏览器自动填充、200% 实际缩放的已执行证据，物理手机软键盘无设备则如实记未验证。
+- [x] **步骤 4 全量命令验证。** 顺序执行 `npm ci`、`npm run check`、`npm run test:unit:coverage -- --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=html`、`npm run test:e2e`。依赖或 Windows 文件占用按实际原因处理，记录命令、退出码、通过／失败／跳过／重试及构建提示，不能以未启动用例代替通过。
+- [x] **步骤 5 逐文件核对覆盖率。** 对 auth.js、authFlow.js、useRegistration.js、RegisterForm.vue、RegisterView.vue、AuthScene.vue、useAuthSceneTransition.js、useLogin.js、LoginView.vue、LoginForm.vue、redirect.js、errors.js 及实际新增逻辑源文件列完整行／分支比例。router/index.js 等配置或纯声明逐文件给出排除理由与导航替代验证。任何业务文件未达 80%／70% 则补有效行为用例并重跑。
+- [x] **步骤 6 完成功能文档。** registration.md 记录接口 Method+Path、公开权限、字段行为表、关键组合、错误与结果未知、生命周期、安全交接、视觉决定、实际测试及限制。login.md 仅更新关联变化；本计划记录实际完成项、截图与报告位置。
+- [x] **步骤 7 自检并提交审核材料。** 执行 `git diff --check`、格式检查、链接存在检查和敏感信息检查，逐项按 AGENTS.md 第九节列变更、校验依据、实际验证、逐文件覆盖率、Git 基线和 NOTE-001/002 处置。显式提交本任务文件，提交 `docs: 记录注册流程与翻面验证`。等待 Claude 对实现切片独立审核，accepted 后由人类决定推送。
 
 ## 计划自审与当前状态
 
 已对照设计 §1–8 检查任务覆盖。NOTE-001/002 在任务 2、3 各有明确实现及验证，容量门槛前置于任务 2。共享接口名称、返回值和任务间依赖一致，五项重点风险均有归属用例。
 
-当前只完成计划编写与文档检查，所有实施复选框保持未勾选。未执行安装、构建、单元或端到端测试，未修改业务源码。计划经人类审阅确认后进入实施。
+计划已获人类确认并执行。复选框表示对应交付及最终验证完成，具体命令、顺序差异和失败修正见下方执行记录。实现尚待 Claude 独立审核。
+
+### 实际执行记录
+
+- 任务 1 提交为 `2201666`，公开调用和共享状态红测后 32 条通过。useRegistration 缺失模块的红测也已运行；部分表单、场景和动画用例在初版实现后补齐，执行顺序未完全采用逐项先红后绿，不伪称这些用例都观察过初始红测。
+- 任务 2 的手机容量先于完整翻面实现验证。320／390 手机及 1366 桌面初次失败后，通过标题和叶片调整达到一屏。任务 2、3 共用场景代码，合并为 `9e8b9cd`，保持提交中依赖完整。最后的验证码展开与异常兜底为 `4401b3b`。
+- 截图复核额外发现两行错误与下一浮动标签贴近，补 12px 安全间隔，通过压缩顶部及辅助说明留白容纳。五视口均检查两行字段错误、两行原错误及发码通知、真实导航、叶片稳定和 SVG 轮廓包含，错误与下一标签至少相隔 2px。
+- 验证码展开改为独立 Transition，180ms 高度／透明度过渡保留 220ms 清理窗口，离场字段 inert。新增浏览器 transitionrun／transitionend 及起止高度断言，曾真实失败后修复，主叶尺寸全程稳定。
+- npm ci 最终退出 0，307 包、7 项中危审计提示。npm run check 退出 0，18 文件 288 条测试通过，构建成功。覆盖率命令 288 通过、0 失败／跳过／todo，逐个业务文件达到 80%／70%。完整 Playwright 为 63 通过、0 失败／跳过／重试，原 51 条登录行为回归保留。
+- 原生自动填充事件 1 次，失焦标签相对输入上边框 0px；真实 200% 缩放为 672×401 CSS 视口、页面高 759px，完整五字段底部链接可通过键盘访问；双向翻面完整播放、录制并查看关键帧。物理手机软键盘、Firefox／Safari 和真实后端未执行。
+- [注册功能文档](../../features/registration.md)包含字段表、关键组合、实际文件清单、失败过程、逐文件覆盖率和验收产物位置。[登录功能文档](../../features/login.md)仅同步当前关联变化。
+- 业务源码后未升级依赖或改写人类 API、主题、样例和审核协议。源码及文档按指定文件提交，待 Claude 对实现独立审核，推送由人类决定。
