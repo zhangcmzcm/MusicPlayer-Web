@@ -21,10 +21,10 @@ export function useAuthSceneTransition({ route, leafRef }) {
       filter: style.filter,
     }
   }
-  function finishAtCurrentRoute() {
+  function finishAtCurrentRoute(resumeNavigation = false) {
     generation++
     clearTimeout(delay)
-    releaseDelay?.(false)
+    releaseDelay?.(resumeNavigation)
     releaseDelay = null
     animation?.cancel()
     animation = null
@@ -33,10 +33,13 @@ export function useAuthSceneTransition({ route, leafRef }) {
     transitioning.value = false
   }
   async function prepareNavigation(name) {
-    if (!['login', 'register'].includes(name) || name === route.name)
+    finishAtCurrentRoute(true)
+    if (
+      !['login', 'register'].includes(name) ||
+      name === route.name ||
+      motion.matches
+    )
       return true
-    finishAtCurrentRoute()
-    if (motion.matches) return true
     source = snapshot()
     transitioning.value = true
     return new Promise((resolve) => {

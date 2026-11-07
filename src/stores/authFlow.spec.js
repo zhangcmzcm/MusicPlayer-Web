@@ -1,8 +1,28 @@
-import { beforeEach, expect, it } from 'vitest'
+import { beforeEach, expect, it, vi } from 'vitest'
+import { computed } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { useAuthFlowStore } from './authFlow.js'
 
-beforeEach(() => setActivePinia(createPinia()))
+beforeEach(() => {
+  setActivePinia(createPinia())
+  vi.useFakeTimers()
+  vi.setSystemTime(1000)
+})
+
+it('should_read_expired_deadlines_without_mutating_computed_dependencies', () => {
+  const flow = useAuthFlowStore()
+  flow.recordSend('REGISTER', 'a@example.test', 61000)
+  const remaining = computed(() =>
+    flow.sendRemaining('REGISTER', 'a@example.test', 1000),
+  )
+  expect(remaining.value).toBe(60)
+  expect(flow.sendRemaining('REGISTER', 'a@example.test', 61000)).toBe(0)
+  expect(remaining.value).toBe(60)
+  vi.setSystemTime(62000)
+  flow.recordSend('REGISTER', 'b@example.test', 122000)
+  expect(flow.sendRemaining('REGISTER', 'a@example.test', 62000)).toBe(0)
+  expect(flow.sendRemaining('REGISTER', 'b@example.test', 62000)).toBe(60)
+})
 
 it('should_consume_registration_success_only_once', () => {
   const flow = useAuthFlowStore()

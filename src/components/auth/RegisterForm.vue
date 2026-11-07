@@ -84,6 +84,21 @@ function measureField(element, leaving) {
   element.inert = leaving
   element.style.setProperty('--field-height', `${element.scrollHeight}px`)
 }
+async function waitForFieldTransition(element, done) {
+  await nextTick()
+  requestAnimationFrame(() => {
+    requestAnimationFrame(async () => {
+      await Promise.allSettled(
+        element.getAnimations().map((animation) => animation.finished),
+      )
+      requestAnimationFrame(done)
+    })
+  })
+}
+function enterField(element, done) {
+  measureField(element, false)
+  waitForFieldTransition(element, done)
+}
 </script>
 
 <template>
@@ -106,9 +121,10 @@ function measureField(element, leaving) {
       v-for="field in fields"
       :key="field.name"
       name="registration-field"
-      :duration="220"
-      @enter="measureField($event, false)"
+      type="transition"
+      @enter="enterField"
       @before-leave="measureField($event, true)"
+      @leave="waitForFieldTransition"
     >
       <el-form-item
         v-if="field.name !== 'code' || modelValue.email.length"

@@ -20,9 +20,6 @@ export const useAuthFlowStore = defineStore('auth-flow', () => {
     return result
   }
   function sendRemaining(purpose, email, now) {
-    for (const [entry, deadline] of sendDeadlines) {
-      if (deadline <= now) sendDeadlines.delete(entry)
-    }
     return Math.max(
       0,
       Math.ceil(
@@ -36,6 +33,9 @@ export const useAuthFlowStore = defineStore('auth-flow', () => {
     )
   }
   function recordSend(purpose, email, deadline) {
+    for (const [entry, expiresAt] of sendDeadlines) {
+      if (expiresAt <= Date.now()) sendDeadlines.delete(entry)
+    }
     const entry = key(purpose, email)
     sendDeadlines.set(entry, Math.max(sendDeadlines.get(entry) || 0, deadline))
   }

@@ -21,11 +21,20 @@ const leafRef = ref()
 const { transitioning, prepareNavigation, finishAtCurrentRoute } =
   useAuthSceneTransition({ route, leafRef })
 onBeforeRouteUpdate((to) => prepareNavigation(to.name))
-const removeAfterHook = router.afterEach((to, from, failure) => {
-  if (isNavigationFailure(failure, NavigationFailureType.aborted))
-    finishAtCurrentRoute()
+let currentNavigation
+const removeBeforeHook = router.beforeEach((to) => {
+  currentNavigation = to
 })
-const removeErrorHook = router.onError(finishAtCurrentRoute)
+const removeAfterHook = router.afterEach((to, from, failure) => {
+  // Duplicate navigation bypasses guards but still replaces Router's pending target.
+  if (isNavigationFailure(failure, NavigationFailureType.duplicated)) {
+    currentNavigation = to
+    finishAtCurrentRoute()
+  } else if (failure && to === currentNavigation) finishAtCurrentRoute()
+})
+const removeErrorHook = router.onError((error, to) => {
+  if (to === currentNavigation) finishAtCurrentRoute()
+})
 const scene = reactive({
   step: 'login',
   heading: null,
@@ -48,6 +57,7 @@ watch(transitioning, async (value) => {
 })
 provide(authSceneKey, scene)
 onUnmounted(() => {
+  removeBeforeHook()
   removeAfterHook()
   removeErrorHook()
   shared.clearHandoff()

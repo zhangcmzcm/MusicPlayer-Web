@@ -40,7 +40,7 @@ async function leafOverflow(page) {
     const path = document.querySelector('[data-testid="main-leaf"] path')
     const inverse = path.getScreenCTM().inverse()
     const elements = document.querySelectorAll(
-      '[data-testid="auth-heading"] h1, [data-testid="auth-heading"] .eyebrow, [data-testid="auth-heading"] .intro, [data-testid="login-view"] label, [data-testid="login-view"] input, [data-testid="login-submit"], .el-form-item__error, [data-testid="login-error"] p, [data-testid="code-notice"], [data-capacity-probe]',
+      '[data-testid="auth-heading"] h1, [data-testid="auth-heading"] .eyebrow, [data-testid="auth-heading"] .intro, [data-testid="login-view"] label, [data-testid="login-view"] input, [data-testid="login-submit"], .account-navigation-space a, .el-form-item__error, [data-testid="login-error"] p, [data-testid="code-notice"], [data-capacity-probe]',
     )
     return [...elements]
       .filter((element) => {

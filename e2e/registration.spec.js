@@ -1,6 +1,68 @@
 import { test, expect } from '@playwright/test'
 import { mockApi } from './fixtures.js'
 
+for (const navigation of ['successor', 'push', 'replace']) {
+  test(`should_recover_preparation_when_navigation_is_${navigation}`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    await mockApi(page, () => ({
+      status: 500,
+      body: { code: 'INTERNAL_ERROR' },
+    }))
+    await page.goto('/login')
+    await expect(page.getByTestId('auth-scene')).toBeVisible()
+    const result = await page.evaluate(async (navigation) => {
+      const router =
+        document.querySelector('#app').__vue_app__.config.globalProperties
+          .$router
+      const scene = document.querySelector('[data-testid="auth-scene"]')
+      const preparing = new Promise((resolve) => {
+        const observer = new MutationObserver(() => {
+          if (scene.classList.contains('scene-transitioning')) {
+            observer.disconnect()
+            resolve()
+          }
+        })
+        observer.observe(scene, {
+          attributes: true,
+          attributeFilter: ['class'],
+        })
+      })
+      const first = router.push('/register?attempt=first')
+      await preparing
+      const second =
+        navigation === 'successor'
+          ? router.push('/register?attempt=second')
+          : router[navigation]('/login')
+      const failures = await Promise.all([first, second])
+      return failures.map((failure) => failure?.type ?? null)
+    }, navigation)
+    const successor = navigation === 'successor'
+    // Vue Router cancelled = 8, duplicated = 16, aborted = 4.
+    expect(result).toEqual(successor ? [8, null] : [4, 16])
+    await expect(page).toHaveURL(
+      successor ? /\/register\?attempt=second$/ : /\/login$/,
+    )
+    await expect(page.getByTestId('auth-scene')).not.toHaveClass(
+      /scene-transitioning/,
+    )
+    await expect(page.locator('.scene-content')).not.toHaveAttribute(
+      'inert',
+      '',
+    )
+    await expect(page.locator('.scene-content')).toHaveCSS('opacity', '1')
+    await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
+    const input = page.getByTestId(
+      successor ? 'register-username' : 'email-input',
+    )
+    await input.fill(successor ? 'listener' : 'listener@example.test')
+    await expect(input).toHaveValue(
+      successor ? 'listener' : 'listener@example.test',
+    )
+  })
+}
+
 async function fillRegistration(page, email = '') {
   await page.getByTestId('register-username').fill('listener')
   await page.getByTestId('register-password').fill('sample-password')
@@ -301,7 +363,7 @@ test('should_expand_code_area_without_resizing_leaf', async ({
   const leaf = await page.getByTestId('main-leaf').boundingBox()
   await page.evaluate(() => {
     window.fieldTransitionEvents = []
-    for (const type of ['transitionrun', 'transitionend']) {
+    for (const type of ['transitionrun', 'transitionend', 'transitioncancel']) {
       document.addEventListener(type, (event) => {
         if (
           event.propertyName === 'height' &&
@@ -310,6 +372,10 @@ test('should_expand_code_area_without_resizing_leaf', async ({
           window.fieldTransitionEvents.push({
             type,
             height: event.target.getBoundingClientRect().height,
+            elapsed: event.elapsedTime,
+            time: performance.now(),
+            classes: event.target.className,
+            transition: getComputedStyle(event.target).transition,
           })
         }
       })

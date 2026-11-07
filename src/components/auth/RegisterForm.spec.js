@@ -5,9 +5,10 @@ import { effectScope } from 'vue'
 import ElementPlus from 'element-plus'
 import RegisterForm from './RegisterForm.vue'
 import { useRegistration } from '../../composables/useRegistration.js'
+import { deferred } from '../../test/factories.js'
 
 beforeEach(() => setActivePinia(createPinia()))
-async function setup() {
+async function setup(stubs = {}) {
   const scope = effectScope()
   const flow = scope.run(() => useRegistration())
   const wrapper = mount(RegisterForm, {
@@ -17,11 +18,37 @@ async function setup() {
       rules: flow.rules,
       'onUpdate:modelValue': (value) => Object.assign(flow.form, value),
     },
-    global: { plugins: [ElementPlus] },
+    global: { plugins: [ElementPlus], stubs },
   })
   await flushPromises()
   return { wrapper, flow, scope }
 }
+it('should_keep_transition_styles_until_actual_animation_finishes', async () => {
+  vi.useFakeTimers()
+  const { wrapper, scope } = await setup({ transition: false })
+  const entering = deferred()
+  await wrapper.get('[name="email"]').setValue('a@example.test')
+  const field = wrapper.get('[data-testid="register-field-code"]')
+  field.element.getAnimations = vi.fn(() => [{ finished: entering.promise }])
+  await vi.advanceTimersByTimeAsync(64)
+  expect(field.element.getAnimations).toHaveBeenCalled()
+  expect(field.classes()).toContain('registration-field-enter-active')
+  entering.resolve()
+  await vi.advanceTimersByTimeAsync(64)
+  expect(field.classes()).not.toContain('registration-field-enter-active')
+  const leaving = deferred()
+  field.element.getAnimations.mockReturnValue([{ finished: leaving.promise }])
+  await wrapper.get('[name="email"]').setValue('')
+  await vi.advanceTimersByTimeAsync(64)
+  expect(field.element.inert).toBe(true)
+  expect(field.classes()).toContain('registration-field-leave-active')
+  leaving.reject(new Error('motion cancelled'))
+  await vi.advanceTimersByTimeAsync(64)
+  expect(wrapper.find('[data-testid="register-field-code"]').exists()).toBe(
+    false,
+  )
+  scope.stop()
+})
 it('should_associate_unique_required_labels_and_expand_only_for_email', async () => {
   const { wrapper, scope } = await setup()
   expect(wrapper.findAll('input')).toHaveLength(4)

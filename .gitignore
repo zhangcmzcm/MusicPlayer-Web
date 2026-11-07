@@ -38,6 +38,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 # 本地 Agent 配置与工作产物
+/PROJECT_STATE.md
 .agents/
 .codex/
 .superpowers/
