@@ -220,6 +220,15 @@ export function useLogin(auth) {
     auth.clearRoleSelection()
   })
   return {
+    prefillResetEmail(email) {
+      loginType.value = 'EMAIL_PASSWORD'
+      form.email = email
+      clearSensitive()
+      error.value = null
+      recoveryNotice.value = ''
+      codeNotice.value = ''
+      auth.clearRoleSelection()
+    },
     prefillRegisteredUsername(username) {
       loginType.value = 'USERNAME_PASSWORD'
       form.username = username

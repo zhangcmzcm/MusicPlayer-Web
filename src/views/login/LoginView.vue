@@ -30,6 +30,8 @@ const {
   loginRemaining,
 } = flow
 const formRef = ref()
+const reset = useAuthFlowStore().takePasswordResetSuccess()
+if (reset) flow.prefillResetEmail(reset.email)
 const registered = useAuthFlowStore().takeRegistrationSuccess()
 if (registered) flow.prefillRegisteredUsername(registered.username)
 const title = computed(() =>
@@ -80,6 +82,10 @@ const registerTarget = computed(() => {
   const redirect = resolveSafeRedirect(router, route.query.redirect)
   return { name: 'register', query: redirect ? { redirect } : {} }
 })
+const resetTarget = computed(() => ({
+  name: 'forgot-password',
+  query: registerTarget.value.query,
+}))
 function updateForm(value) {
   Object.assign(form, value)
 }
@@ -93,12 +99,16 @@ function updateForm(value) {
   >
     <div class="feedback-space">
       <p
-        v-if="registered"
+        v-if="registered || reset"
         class="code-notice"
         role="status"
-        data-testid="registration-success"
+        :data-testid="reset ? 'password-reset-success' : 'registration-success'"
       >
-        注册成功，请使用新账号登录。
+        {{
+          reset
+            ? '密码已重置，请使用新密码登录。'
+            : '注册成功，请使用新账号登录。'
+        }}
       </p>
       <div
         v-if="safeError"
@@ -133,6 +143,7 @@ function updateForm(value) {
         :send-remaining="sendRemaining"
         :login-remaining="loginRemaining"
         :register-target="registerTarget"
+        :reset-target="resetTarget"
         @update:model-value="updateForm"
         @method-changed="flow.changeMethod"
         @submit="flow.submit(formRef)"

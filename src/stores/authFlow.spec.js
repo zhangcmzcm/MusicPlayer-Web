@@ -35,6 +35,38 @@ it('should_consume_registration_success_only_once', () => {
   expect(sessionStorage.length).toBe(0)
 })
 
+it('should_keep_reset_handoff_separate_and_consume_it_once', () => {
+  const flow = useAuthFlowStore()
+  flow.completePasswordReset('listener@example.test')
+  expect(flow.takeRegistrationSuccess()).toBeNull()
+  expect(flow.takePasswordResetSuccess()).toEqual({
+    email: 'listener@example.test',
+  })
+  expect(flow.takePasswordResetSuccess()).toBeNull()
+  flow.completePasswordReset('another@example.test')
+  flow.clearHandoff()
+  expect(flow.takePasswordResetSuccess()).toBeNull()
+})
+
+it('should_expire_and_preserve_maximum_reset_waits_independently', () => {
+  const flow = useAuthFlowStore()
+  flow.recordPasswordResetWait('request', 'all', 61000)
+  flow.recordPasswordResetWait('request', 'all', 2000)
+  expect(flow.passwordResetRemaining('request', 'a@example.test', 1000)).toBe(
+    60,
+  )
+  expect(flow.passwordResetRemaining('verify', 'a@example.test', 1000)).toBe(0)
+  expect(flow.sendRemaining('LOGIN', 'a@example.test', 1000)).toBe(0)
+  vi.setSystemTime(62000)
+  flow.recordPasswordResetWait('verify', 'a@example.test', 122000)
+  expect(flow.passwordResetRemaining('request', 'a@example.test', 62000)).toBe(
+    0,
+  )
+  expect(flow.passwordResetRemaining('verify', 'a@example.test', 62000)).toBe(
+    60,
+  )
+})
+
 it('should_keep_purpose_limits_separate_and_share_ip_limit', () => {
   const flow = useAuthFlowStore()
   flow.recordSend('REGISTER', 'A@example.test', 61000)

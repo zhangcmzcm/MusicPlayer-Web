@@ -6,6 +6,12 @@ export function createAppRouter(auth) {
     history: createWebHistory(),
     routes: [
       {
+        path: '/forgot-password',
+        name: 'forgot-password',
+        component: () =>
+          import('../views/password-reset/PasswordResetView.vue'),
+      },
+      {
         path: '/',
         name: 'auth-scene',
         component: () => import('../components/auth/AuthScene.vue'),

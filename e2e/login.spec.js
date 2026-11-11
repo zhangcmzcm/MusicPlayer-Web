@@ -40,7 +40,7 @@ async function leafOverflow(page) {
     const path = document.querySelector('[data-testid="main-leaf"] path')
     const inverse = path.getScreenCTM().inverse()
     const elements = document.querySelectorAll(
-      '[data-testid="auth-heading"] h1, [data-testid="auth-heading"] .eyebrow, [data-testid="auth-heading"] .intro, [data-testid="login-view"] label, [data-testid="login-view"] input, [data-testid="login-submit"], .account-navigation-space a, .el-form-item__error, [data-testid="login-error"] p, [data-testid="code-notice"], [data-capacity-probe]',
+      '[data-testid="auth-heading"] h1, [data-testid="auth-heading"] .eyebrow, [data-testid="auth-heading"] .intro, [data-testid="login-view"] label, [data-testid="login-view"] input, [data-testid="login-submit"], .account-navigation-space a, .password-assist-space a, .el-form-item__error, [data-testid="login-error"] p, [data-testid="code-notice"], [data-capacity-probe]',
     )
     return [...elements]
       .filter((element) => {
@@ -145,18 +145,9 @@ for (const viewport of [
         await expect(page.getByTestId('code-notice')).toBeVisible()
       }
       await expectStable(page, initial)
-      await page.evaluate(() => {
-        for (const [selector, text] of [
-          ['.password-assist-space', '忘记密码？'],
-        ]) {
-          const parent = document.querySelector(selector)
-          if (!parent) continue
-          const span = document.createElement('span')
-          span.dataset.capacityProbe = ''
-          span.textContent = text
-          parent.append(span)
-        }
-      })
+      await expect(page.getByRole('link', { name: '忘记密码？' })).toHaveCount(
+        method === 'EMAIL_CODE' ? 0 : 1,
+      )
       await expectStable(page, initial)
       expect(await leafOverflow(page)).toEqual([])
       await page.screenshot({
@@ -166,7 +157,7 @@ for (const viewport of [
       await page.reload()
       await expect(page.locator('[data-capacity-probe]')).toHaveCount(0)
       await expect(page.getByRole('link', { name: '忘记密码？' })).toHaveCount(
-        0,
+        1,
       )
     })
   }

@@ -109,6 +109,19 @@ export const useAuthStore = defineStore('auth', () => {
     authenticate,
     selectRole,
     clearSession,
+    getSessionRevision: () => generation,
+    clearSessionIfCurrent({
+      session: previousSession,
+      roleSelection: previousSelection,
+      revision,
+    }) {
+      if (
+        generation === revision &&
+        session.value === previousSession &&
+        roleSelection.value === previousSelection
+      )
+        clearSession()
+    },
     clearRoleSelection,
   }
 })

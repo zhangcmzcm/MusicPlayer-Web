@@ -16,6 +16,26 @@ beforeEach(() => {
   setActivePinia(createPinia())
   vi.mocked(api.login).mockReset()
 })
+it('should_keep_new_authentication_when_old_reset_finishes', async () => {
+  const auth = useAuthStore()
+  const snapshot = {
+    session: auth.session,
+    roleSelection: auth.roleSelection,
+    revision: auth.getSessionRevision(),
+  }
+  vi.mocked(api.login).mockResolvedValue(authenticated())
+  await auth.authenticate({ loginType: 'EMAIL_PASSWORD' })
+  auth.clearSessionIfCurrent(snapshot)
+  expect(auth.isAuthenticated).toBe(true)
+  const current = {
+    session: auth.session,
+    roleSelection: auth.roleSelection,
+    revision: auth.getSessionRevision(),
+  }
+  auth.roleSelection = ticket()
+  auth.clearSessionIfCurrent(current)
+  expect(auth.isAuthenticated).toBe(true)
+})
 it('should_persist_authenticated_session_and_restore_it', async () => {
   vi.mocked(api.login).mockResolvedValue(authenticated())
   const auth = useAuthStore()

@@ -1,4 +1,13 @@
 export const errorMessages = {
+  PASSWORD_RESET_REQUEST_RATE_LIMITED: '找回密码申请过于频繁，请稍后重试。',
+  PASSWORD_RESET_REQUEST_UNAVAILABLE: '找回密码申请服务暂时不可用。',
+  PASSWORD_RESET_VERIFICATION_RATE_LIMITED: '验证码验证过于频繁，请稍后重试。',
+  PASSWORD_RESET_VERIFICATION_UNAVAILABLE: '验证码验证服务暂时不可用。',
+  PASSWORD_RESET_CONFIRMATION_RATE_LIMITED: '密码重置过于频繁，请稍后重试。',
+  PASSWORD_RESET_CONFIRMATION_UNAVAILABLE: '密码重置服务暂时不可用。',
+  PASSWORD_RESET_VERIFICATION_FAILED:
+    '验证码或找回申请无效，请检查或重新申请。',
+  NEW_PASSWORD_SAME_AS_OLD: '新密码不能与原密码相同，请更换密码。',
   USERNAME_ALREADY_EXISTS: '该用户名已被使用，请更换用户名。',
   EMAIL_ALREADY_EXISTS: '该邮箱已被使用，请更换邮箱或尝试登录。',
   USER_ALREADY_EXISTS: '账户信息已被使用，请检查后重试。',

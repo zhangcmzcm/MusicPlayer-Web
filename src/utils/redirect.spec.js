@@ -6,6 +6,7 @@ const component = { template: '<p />' }
 const router = createRouter({
   history: createMemoryHistory(),
   routes: [
+    { path: '/forgot-password', name: 'forgot-password', component },
     { path: '/', redirect: '/login' },
     { path: '/login', name: 'login', component },
     { path: '/register', name: 'register', component },
@@ -15,6 +16,8 @@ const router = createRouter({
 })
 it.each([
   '/register',
+  '/forgot-password',
+  '/forgot-password?redirect=/destination',
   '/register?redirect=/destination',
   '/login',
   '/',

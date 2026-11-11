@@ -20,6 +20,11 @@ async function setup() {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
+      {
+        path: '/forgot-password',
+        name: 'forgot-password',
+        component: { template: '<div />' },
+      },
       { path: '/login', name: 'login', component: LoginView },
       {
         path: '/register',

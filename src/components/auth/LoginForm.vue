@@ -3,6 +3,7 @@ import { computed, nextTick, ref, useId, watch } from 'vue'
 import { loginMethods } from '../../composables/useLogin.js'
 
 const props = defineProps({
+  resetTarget: { type: Object, default: () => ({ name: 'forgot-password' }) },
   registerTarget: { type: Object, default: () => ({ name: 'register' }) },
   modelValue: { type: Object, required: true },
   loginType: { type: String, required: true },
@@ -215,7 +216,9 @@ defineExpose({ validate, validateEmail })
         </div></template
       >
     </el-form-item>
-    <div class="password-assist-space" aria-hidden="true"></div>
+    <div class="password-assist-space">
+      <RouterLink v-if="!isCode" :to="resetTarget">忘记密码？</RouterLink>
+    </div>
     <el-button
       class="login-button"
       type="primary"
@@ -340,6 +343,15 @@ defineExpose({ validate, validateEmail })
 }
 .password-assist-space {
   text-align: right;
+  font-size: 12px;
+}
+.password-assist-space a {
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+.password-assist-space a:hover {
+  color: var(--green-action);
+  text-decoration: underline;
 }
 .account-navigation-space {
   text-align: center;

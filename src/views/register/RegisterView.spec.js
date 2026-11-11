@@ -32,6 +32,11 @@ async function setup(path = '/register') {
     history: createMemoryHistory(),
     routes: [
       {
+        path: '/forgot-password',
+        name: 'forgot-password',
+        component: { template: '<div />' },
+      },
+      {
         path: '/',
         component: AuthScene,
         children: [
