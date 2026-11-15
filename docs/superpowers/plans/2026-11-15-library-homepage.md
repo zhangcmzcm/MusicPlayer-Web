@@ -182,7 +182,7 @@ it('should_preserve_new_revision_when_old_401_uses_same_token', async () => {
 
 **接口**由 LibraryView 将 URL 转成 queryRef，消费 useTrackList，再向 toolbar 和 table 传 props。表单和分页事件分别改变 URL 或显式刷新。BusinessLayout 从实际路由的 `meta.navigation = { section, label, order }` 构建导航，section 取 top／sidebar，角色依据 `meta.roles` 和当前会话。
 
-- [ ] 写表格失败用例，验证合法 null 的展示、当前页真实统计和深分页边界。
+- [x] 写表格失败用例，验证合法 null 的展示、当前页真实统计和深分页边界。
 
 ```js
 it('should_recover_from_a_legal_empty_page', async () => {
@@ -207,12 +207,12 @@ it('should_recover_from_a_legal_empty_page', async () => {
 })
 ```
 
-- [ ] 执行 `npm run test:unit -- src/components/library/TrackTable.spec.js` 观察红测，再实现 table 的加载、空、错误、重试与分页，显示精确总数。上一页在 page>0 时可用，下一页要求 hasNext 且 `(page+1)×size≤10000`。页码输入从 1 开始并转换为 0 基参数，上限为 `floor(10000/size)+1`，越界输入显示校验反馈。
-- [ ] toolbar 使用 Element Plus 表单验证原始 q，提供排序与页大小事件。覆盖 Enter、清空、相同查询刷新、限流恢复和 IME 输入期间提交控制，输入内容可以继续编辑。
-- [ ] 实现 LibraryView 的路由查询编排。搜索、排序和页大小提交回第 1 页，浏览器前后退恢复查询，非法导航参数呈现恢复默认入口。真实数据到达后设置页面标题焦点。
-- [ ] 实现 BusinessLayout 的音乐入口与当前可用导航，消费实际路由元信息。隔离测试注册真实组件测试路由，分别断言 USER、ADMIN 的角色菜单，ADMIN 账户以 USER 身份的会话按 USER 菜单处理。
-- [ ] 复用确认稿的白色内容面、嫩叶绿层次、宋体标题、连续歌曲行和手机信息合并。桌面比例及手机侧栏依据实际菜单和可用内容布局，键盘焦点、抽屉关闭和减少动态具有明确样式。
-- [ ] 运行四个新增组件／页面 spec，通过后提交“feat: 实现曲库主页布局与查询交互”。
+- [x] 执行 `npm run test:unit -- src/components/library/TrackTable.spec.js` 观察红测，再实现 table 的加载、空、错误、重试与分页，显示精确总数。上一页在 page>0 时可用，下一页要求 hasNext 且 `(page+1)×size≤10000`。页码输入从 1 开始并转换为 0 基参数，上限为 `floor(10000/size)+1`，越界输入显示校验反馈。
+- [x] toolbar 使用 Element Plus 表单验证原始 q，提供排序与页大小事件。覆盖 Enter、清空、相同查询刷新、限流恢复和 IME 输入期间提交控制，输入内容可以继续编辑。
+- [x] 实现 LibraryView 的路由查询编排。搜索、排序和页大小提交回第 1 页，浏览器前后退恢复查询，非法导航参数呈现恢复默认入口。路由切换后设置页面标题焦点，异步数据到达时保留用户当前焦点。
+- [x] 实现 BusinessLayout 的音乐入口与当前可用导航，消费实际路由元信息。隔离测试注册真实组件测试路由，分别断言 USER、ADMIN 的角色菜单，ADMIN 账户以 USER 身份的会话按 USER 菜单处理。
+- [x] 复用确认稿的白色内容面、嫩叶绿层次、宋体标题、连续歌曲行和手机信息合并。桌面比例及手机侧栏依据实际菜单和可用内容布局，键盘焦点、抽屉关闭和减少动态具有明确样式。
+- [x] 运行四个新增组件／页面 spec，通过后提交“feat: 实现曲库主页布局与查询交互”。
 
 ## 任务 4 真实路由、登录默认导航及关联回归
 
@@ -302,3 +302,6 @@ test('should_browse_search_and_restore_library_query', async ({ page }) => {
 
 - 任务 2 红测复现相同 Token 的新会话被旧 401 清理，22 条通过、1 条失败，两个新模块尚未创建。实现 revision 比较、请求取消和资源释放后，定向 46 条全部通过，lint 零警告。
 - 任务 3 首次红测为四个组件文件缺失，4 个测试文件失败，用例尚未开始。
+
+- 任务 3 首轮 19 条用例为 12 通过、7 失败，并出现 Element Plus Select 的递归更新。定位为 VTU 全局 Teleport stub 反复销毁选项造成，测试改用真实 Teleport 目标。表单校验反馈使用等待断言。复跑 19 通过、0 失败、0 未处理错误，lint 零警告。
+
