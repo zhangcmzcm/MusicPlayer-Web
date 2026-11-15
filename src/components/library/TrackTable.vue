@@ -75,6 +75,9 @@ watch(
 function position(index) {
   return props.query.page * props.query.size + index + 1
 }
+function secondaryText(track) {
+  return `${track.artistName} / ${track.albumName || '未标注专辑'}`
+}
 </script>
 
 <template>
@@ -124,9 +127,11 @@ function position(index) {
             <TrackCover :track-id="row.id" :enabled="Boolean(row.cover)" />
             <div class="song-copy">
               <span class="song-title" :title="row.title">{{ row.title }}</span
-              ><span v-if="compact" class="song-secondary"
-                >{{ row.artistName }} /
-                {{ row.albumName || '未标注专辑' }}</span
+              ><span
+                v-if="compact"
+                class="song-secondary"
+                :title="secondaryText(row)"
+                >{{ secondaryText(row) }}</span
               >
             </div>
           </div>

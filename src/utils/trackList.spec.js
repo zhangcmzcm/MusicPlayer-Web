@@ -29,6 +29,7 @@ describe('library queries', () => {
   it.each([
     { page: '100', size: '100' },
     { page: '10000', size: '1' },
+    { page: '+5', size: '+20' },
     { q: ' 林间 ', sort: 'title,asc', page: '01' },
   ])('should_accept_legal_query_%j', (routeQuery) => {
     expect(parseLibraryQuery(routeQuery).error).toBeNull()

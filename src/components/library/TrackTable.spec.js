@@ -111,6 +111,13 @@ it('should_merge_secondary_metadata_for_compact_screens', async () => {
   })
   const wrapper = table()
   await flushPromises()
+  expect(wrapper.get('.song-secondary').attributes('title')).toBe(
+    '林间来信 / 叶影',
+  )
+  await wrapper.setProps({ page: trackPage({ albumName: null }) })
+  expect(wrapper.get('.song-secondary').attributes('title')).toBe(
+    '林间来信 / 未标注专辑',
+  )
   expect(wrapper.findAll('th').some((cell) => cell.text() === '艺术家')).toBe(
     false,
   )

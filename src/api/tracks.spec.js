@@ -87,6 +87,34 @@ describe('track list API', () => {
       })
     },
   )
+  it.each(['null', '"42"', '"abc"', '{}', '[]', 'true'])(
+    'should_reject_non_numeric_json_resource_id_%s',
+    async (rawId) => {
+      const raw = trackPageText().replace('"id":42', `"id":${rawId}`)
+      http.defaults.adapter = async (config) => respond(raw, config)
+      await expect(listTracks(query)).rejects.toMatchObject({
+        code: 'INVALID_RESPONSE',
+      })
+    },
+  )
+  it('should_reject_a_missing_resource_id', async () => {
+    const raw = trackPageText().replace('"id":42,', '')
+    http.defaults.adapter = async (config) => respond(raw, config)
+    await expect(listTracks(query)).rejects.toMatchObject({
+      code: 'INVALID_RESPONSE',
+    })
+  })
+  it.each(['"245000"', '"abc"', '{}', '[]', 'true'])(
+    'should_degrade_non_numeric_json_duration_%s',
+    async (rawDuration) => {
+      const raw = trackPageText().replace(
+        '"durationMs":245000',
+        `"durationMs":${rawDuration}`,
+      )
+      http.defaults.adapter = async (config) => respond(raw, config)
+      expect((await listTracks(query)).items[0].durationMs).toBeNull()
+    },
+  )
   it.each([
     ['items', 'null'],
     ['page', '-1'],

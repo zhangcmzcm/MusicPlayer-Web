@@ -101,14 +101,14 @@ Playwright 新增 15 条曲库用例，覆盖真实登录到曲库、原始搜�
 
 检查尺寸为 1366×768、1440×900、1920×1080、320×740、390×844。Playwright 对文档、main 和表格内部横向溢出、时长列可见、长歌名、省略、搜索错误反馈、分页纵向滚动与键盘操作进行断言。已人工查看桌面及 320px 代表截图，修复窄屏自动列宽挤出时长的问题。图片与报告输出到忽略的 test-results，源码仓库保留可重复生成步骤。
 
-| 实际命令                                                                                                         | 结果                                                                             |
-| ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| npm ci                                                                                                           | 沙箱内安装未完成，沙箱外按锁文件成功安装 308 包、审计 309 包，报告 6 项 moderate |
-| npm run check                                                                                                    | 待最终验证记录                                                                   |
-| npm run test:unit:coverage -- --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=html | 最终复跑 471 通过、0 失败、0 skipped、0 todo                                     |
-| npm run test:e2e -- e2e/login.spec.js e2e/registration.spec.js e2e/password-reset.spec.js                        | 78 通过、0 失败、0 跳过                                                          |
-| npm run test:e2e -- e2e/library.spec.js                                                                          | 首轮 14 通过、1 定位超时，改为排序键盘操作后 15 通过，窄屏布局修复后 15 通过     |
-| npm run test:e2e                                                                                                 | 待最终验证记录                                                                   |
+| 实际命令                                                                                                         | 结果                                                                                                    |
+| ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| npm ci                                                                                                           | 沙箱内安装未完成，沙箱外按锁文件成功安装 308 包、审计 309 包，报告 6 项 moderate                        |
+| npm run check                                                                                                    | 反馈处理后复跑退出 0，lint 零警告、格式通过、30 个文件 484 条单测通过，0 失败／跳过／todo，生产构建成功 |
+| npm run test:unit:coverage -- --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=html | 反馈处理后复跑 484 通过、0 失败、0 skipped、0 todo                                                      |
+| npm run test:e2e -- e2e/login.spec.js e2e/registration.spec.js e2e/password-reset.spec.js                        | 78 通过、0 失败、0 跳过                                                                                 |
+| npm run test:e2e -- e2e/library.spec.js                                                                          | 首轮 14 通过、1 定位超时，改为排序键盘操作后 15 通过，窄屏布局修复后 15 通过                            |
+| npm run test:e2e                                                                                                 | 反馈处理后复跑 93 通过、0 失败、0 跳过，retries=0，无 flaky／预期失败                                   |
 
 组件首轮递归更新来自全局 Teleport 测试替身与 Element Plus 的交互，改用真实目标后 19 条组件用例通过。真实启动测试进一步复现 Teleport 目标与父布局同轮挂载的时序问题，使用 Vue 支持的 defer 等待目标挂载。登录相关定向单测最终 96 条通过。过程中的失败与修复记录在实施计划中。
 
@@ -116,21 +116,21 @@ Playwright 新增 15 条曲库用例，覆盖真实登录到曲库、原始搜�
 
 报告来自 `coverage/coverage-summary.json` 及 `coverage/index.html`，逐文件统计完整源码，达到行 80%、分支 70% 的门槛。测试、fixtures 和文档不纳入业务覆盖率。
 
-| 文件                                      | 行     | 分支   |
-| ----------------------------------------- | ------ | ------ |
-| src/api/tracks.js                         | 90.56% | 79.45% |
-| src/api/http.js                           | 90%    | 81.57% |
-| src/utils/trackList.js                    | 100%   | 100%   |
-| src/utils/errors.js                       | 100%   | 90.9%  |
-| src/composables/useTrackList.js           | 100%   | 96.66% |
-| src/components/library/TrackCover.vue     | 100%   | 79.16% |
-| src/components/library/LibraryToolbar.vue | 89.13% | 89.79% |
-| src/components/library/TrackTable.vue     | 100%   | 100%   |
-| src/components/layout/BusinessLayout.vue  | 92.1%  | 100%   |
-| src/views/library/LibraryView.vue         | 97.29% | 79.16% |
-| src/views/login/LoginView.vue             | 100%   | 96.22% |
-| src/main.js                               | 100%   | 100%   |
-| src/router/index.js                       | 100%   | 100%   |
+| 文件                                      | 行     | 分支                   |
+| ----------------------------------------- | ------ | ---------------------- |
+| src/api/tracks.js                         | 96.22% | 83.56%                 |
+| src/api/http.js                           | 90%    | 81.57%                 |
+| src/utils/trackList.js                    | 100%   | 100%                   |
+| src/utils/errors.js                       | 100%   | 90.9%                  |
+| src/composables/useTrackList.js           | 100%   | 96.66%                 |
+| src/components/library/TrackCover.vue     | 100%   | 79.16%                 |
+| src/components/library/LibraryToolbar.vue | 89.13% | 89.79%                 |
+| src/components/library/TrackTable.vue     | 100%   | 100%                   |
+| src/components/layout/BusinessLayout.vue  | 92.1%  | 100%                   |
+| src/views/library/LibraryView.vue         | 97.29% | 79.16%                 |
+| src/views/login/LoginView.vue             | 100%   | 96.22%                 |
+| src/main.js                               | 100%   | 100%                   |
+| src/router/index.js                       | 100%   | 不适用，0 个可执行分支 |
 
 路由为声明与既有守卫接入，真实 router 单测及完整浏览器主流程提供替代交互证据，同时报告仍记录其实际文件覆盖率。main 含失效回调逻辑，已纳入完整覆盖率。
 
@@ -146,4 +146,6 @@ Playwright 新增 15 条曲库用例，覆盖真实登录到曲库、原始搜�
 
 ### 审核反馈复核与处置
 
-首次提交，待独立 Claude 审核。
+第 1 轮进程由 Codex 在核对运行器模型配置时中断，按实质审核计轮。第 2 轮完整静态审核结论 escalated，提出 BLOCK-001 材料矛盾及审核运行权限问题。人类以“继续”要求推进后，已补齐材料、恢复验证运行配置并完成 484 条单测与 93 条 e2e 自验，等待第 3 轮独立核实。本机 Claude Code 配置模型为 mimo-v2.6-pro。[原报告与轮次记录](../reviews/2026-11-15-library-review-round-2.md)及[逐项复核](../reviews/2026-11-15-library-review-response.md)
+
+反馈处理后的实际日志为 `.superpowers/library-revision-ci-run.txt`、`library-revision-check-run.txt`、`library-revision-coverage-run.txt` 和 `library-revision-e2e-run.txt`。新增 13 条类型与查询边界用例，API 文件行覆盖率提升至 96.22%、分支 83.56%，其他改动文件继续达到逐文件门槛。
