@@ -8,7 +8,7 @@
 
 曲库主页承担进入项目后的听歌入口。相关账户功能沿用既有任务编号，歌曲管理按独立流程交付。曲库、底部播放栏和全屏播放器的共同样式已确认，各切片在此基础上完成业务交互设计。[已确认样式](../superpowers/specs/2026-11-15-library-style-design.md)
 
-LIB-01 已形成[曲库主页实施计划](../superpowers/plans/2026-11-15-library-homepage.md)，已完成曲库浏览、搜索、分页、鉴权封面和默认落点实现，正在完整验证与独立审核。[功能说明](../features/library.md)
+LIB-01 已形成[曲库主页实施计划](../superpowers/plans/2026-11-15-library-homepage.md)，已完成曲库浏览、搜索、分页、鉴权封面和默认落点实现，已完成完整验证，第 3 轮独立审核 accepted。[功能说明](../features/library.md)
 
 ## 任务总览
 

@@ -290,7 +290,7 @@ test('should_browse_search_and_restore_library_query', async ({ page }) => {
 - API、查询模型、fixtures、composable 和页面间的名称及返回字段按文件地图统一。新增源码均有同目录 spec。
 - 五项 Review Focus 分别落入任务 1—5 的具体测试。整体错误处理继续消费稳定 code，图片错误在公共拦截前完成格式转换。
 - `getSessionRevision` 的现有调用兼容性、相同 Token 的新会话保护、默认登录 GET 对既有 mock 的影响均有明确回归位置。
-- 任务 1—5 的实现、文档与自验已完成，反馈处理与自验已完成，等待第 3 轮独立审核核实。
+- 任务 1—5 的实现、文档与自验已完成，反馈处理与自验已完成，第 3 轮独立审核 accepted，完整切片可供人类最终验收。
 
 ## 实际执行记录
 
@@ -314,3 +314,5 @@ test('should_browse_search_and_restore_library_query', async ({ page }) => {
 
 - 审核计数按实际执行，第 1 轮已读业务源码后被 Codex 中断，第 2 轮完整静态报告原文位于 docs/reviews/2026-11-15-library-review-round-2.md，报告调用提示中的“第 1 轮”已在上下文纠正。结论 escalated，材料待填与运行器权限按 docs/reviews/2026-11-15-library-review-response.md 逐项复核。人类以“继续”恢复推进同一任务。
 - 反馈处理后 npm ci、check、coverage、完整 e2e 均退出 0，484 单测、93 浏览器用例通过，无失败／跳过／todo／重试／flaky。API 非数字类型和带正号查询补 13 例，手机元数据补完整 title。第 3 轮恢复运行器必要验证能力，独立核实标准保持既有规则。
+
+- 第 3 轮独立审核 accepted，实际执行 npm ci、check、coverage 与完整 e2e 均退出 0，484 单测、93 e2e 通过，逐文件覆盖率达标。BLOCK-001 与运行环境阻断关闭，NOTE-001／002／004 修复核实，NOTE-003 处置接受。原始报告归档于 docs/reviews/2026-11-15-library-review-round-3.md。送审代码版本 97bc0e014fab5cd8749747a2bb88b08bfe1cbee2，后续仅登记当前结论。
