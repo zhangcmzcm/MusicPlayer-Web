@@ -1,4 +1,12 @@
 export const errorMessages = {
+  INVALID_LIBRARY_QUERY: '曲库查询条件无效，请恢复默认条件。',
+  TRACK_STORE_UNAVAILABLE: '曲库暂时无法读取，请稍后重试。',
+  TRACK_SEARCH_RATE_LIMITED: '搜索过于频繁，请稍后重试。',
+  TRACK_SEARCH_RATE_LIMIT_UNAVAILABLE: '搜索服务暂时不可用，请稍后重试。',
+  TRACK_NOT_FOUND: '歌曲暂时不可用，请刷新曲库。',
+  COVER_NOT_FOUND: '暂无可用封面。',
+  COVER_STORAGE_INCONSISTENT: '封面暂时无法读取。',
+  MEDIA_STORAGE_UNAVAILABLE: '媒体资源暂时不可用。',
   PASSWORD_RESET_REQUEST_RATE_LIMITED: '找回密码申请过于频繁，请稍后重试。',
   PASSWORD_RESET_REQUEST_UNAVAILABLE: '找回密码申请服务暂时不可用。',
   PASSWORD_RESET_VERIFICATION_RATE_LIMITED: '验证码验证过于频繁，请稍后重试。',

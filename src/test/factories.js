@@ -38,3 +38,31 @@ export function deferred() {
   })
   return { promise, resolve, reject }
 }
+
+export function trackPage({
+  id = '42',
+  title = '风经过的地方',
+  artistName = '林间来信',
+  albumName = '叶影',
+  durationMs = '245000',
+  cover = null,
+  status = 'PUBLISHED',
+  ...overrides
+} = {}) {
+  return {
+    items: [{ id, title, artistName, albumName, durationMs, cover, status }],
+    page: 0,
+    size: 20,
+    totalElements: '1',
+    totalPages: '1',
+    hasNext: false,
+    ...overrides,
+  }
+}
+
+export function trackPageText(overrides = {}) {
+  return JSON.stringify(trackPage(overrides)).replace(
+    /"(id|durationMs|totalElements|totalPages|sizeBytes)":"(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)"/g,
+    '"$1":$2',
+  )
+}

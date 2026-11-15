@@ -97,7 +97,7 @@
 
 **接口**采用文件地图的 listTracks、getTrackCover 和查询工具。fixtures 的 trackPage 返回标准业务模型，trackPageText 返回包含原始数值 token 的 JSON 文本，默认一首歌曲、page=0、size=20、总数与总页数为 1，覆盖参数可替换 id、可空字段和分页值。
 
-- [ ] 写失败用例，覆盖最大 Long ID 经真实 Axios adapter 的响应转换后保持完整，并保持 q 原样和 status 固定。
+- [x] 写失败用例，覆盖最大 Long ID 经真实 Axios adapter 的响应转换后保持完整，并保持 q 原样和 status 固定。
 
 ```js
 it('should_preserve_long_ids_and_send_published_scope', async () => {
@@ -129,12 +129,12 @@ it('should_preserve_long_ids_and_send_published_scope', async () => {
 })
 ```
 
-- [ ] 用 `npm run test:unit -- src/api/tracks.spec.js src/utils/trackList.spec.js` 观察缺失模块或未满足断言的红测，记录实际失败。
-- [ ] 在同一任务补齐查询用例。100 个补充平面字符合法，101 个报长度错误，纯 Unicode 空白报关键词错误，5 词合法、6 词报词数错误，重复词计数。`100×100` 合法，`101×100` 和 `501×20` 报查询错误，空 q 形成普通列表。
-- [ ] 实现查询接口与 formatter。duration 为 null 显示 `--:--`，`245000` 显示 `4:05`，最大 Long 按精确整数除法格式化。日期字段仅参与排序。
-- [ ] 安装锁定依赖，实现原始文本转换及 Long 消费，覆盖最大 ID、等价指数／小数数值、非法关键 ID、合法 null、缺失展示字段、未知新增字段、空页与超大统计值。
-- [ ] 实现 getTrackCover。成功读取 arraybuffer 后形成 Blob，二进制 ProblemDetail 先解码再交给公共错误处理。覆盖 JSON code、无正文 401、404、502、503、取消和中断，成功 MIME 支持 JPEG／PNG／WebP。短传输依浏览器读取失败处理，模拟中断后显示缺省封面。
-- [ ] 执行本任务两个定向 spec 及 `src/utils/errors.spec.js`，确认通过后提交该任务相关文件，提交信息采用“feat: 接入曲库查询与鉴权封面”。
+- [x] 用 `npm run test:unit -- src/api/tracks.spec.js src/utils/trackList.spec.js` 观察缺失模块或未满足断言的红测，记录实际失败。
+- [x] 在同一任务补齐查询用例。100 个补充平面字符合法，101 个报长度错误，纯 Unicode 空白报关键词错误，5 词合法、6 词报词数错误，重复词计数。`100×100` 合法，`101×100` 和 `501×20` 报查询错误，空 q 形成普通列表。
+- [x] 实现查询接口与 formatter。duration 为 null 显示 `--:--`，`245000` 显示 `4:05`，最大 Long 按精确整数除法格式化。日期字段仅参与排序。
+- [x] 安装锁定依赖，实现原始文本转换及 Long 消费，覆盖最大 ID、等价指数／小数数值、非法关键 ID、合法 null、缺失展示字段、未知新增字段、空页与超大统计值。
+- [x] 实现 getTrackCover。成功读取 arraybuffer 后形成 Blob，二进制 ProblemDetail 先解码再交给公共错误处理。覆盖 JSON code、无正文 401、404、502、503、取消和中断，成功 MIME 支持 JPEG／PNG／WebP。短传输依浏览器读取失败处理，模拟中断后显示缺省封面。
+- [x] 执行本任务两个定向 spec 及 `src/utils/errors.spec.js`，确认通过后提交该任务相关文件，提交信息采用“feat: 接入曲库查询与鉴权封面”。
 
 ## 任务 2 列表请求、会话边界和封面资源生命周期
 
@@ -291,3 +291,11 @@ test('should_browse_search_and_restore_library_query', async ({ page }) => {
 - 五项 Review Focus 分别落入任务 1—5 的具体测试。整体错误处理继续消费稳定 code，图片错误在公共拦截前完成格式转换。
 - `getSessionRevision` 的现有调用兼容性、相同 Token 的新会话保护、默认登录 GET 对既有 mock 的影响均有明确回归位置。
 - 当前完成实施规划与文档检查。复选框对应后续实际执行记录，业务测试数量、运行结果和覆盖率在执行后填写。
+
+## 实际执行记录
+
+- 人类以“开始吧”授权采用推荐的当前会话实现方式，实际代码基线为 cde4739，原 9714ed4 为样式设计提交。
+- 任务 1 首次定向红测为两个模块缺失，2 个测试文件失败，测试用例尚未开始。
+- 依赖安装在沙箱内遇到 registry DNS 的 ENOTFOUND，获准在沙箱外重试后成功，新增 lossless-json 4.3.3。安装审计报告 6 项中危，309 个包。
+- 任务 1 首轮实现运行 72 条用例，71 通过、1 失败。畸形成功 JSON 在响应转换抛错时被公共层映射为网络错误，改为由领域响应校验产生 INVALID_RESPONSE。
+- 定向复跑 72 通过、0 失败、0 跳过，npm run lint 退出 0、零警告。
