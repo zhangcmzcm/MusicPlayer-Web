@@ -71,7 +71,7 @@ watch(
 </script>
 
 <template>
-  <Teleport to="#business-search">
+  <Teleport defer to="#business-search">
     <div class="search-container" :class="{ 'is-open': searchOpen }">
       <el-button
         class="mobile-search-toggle"

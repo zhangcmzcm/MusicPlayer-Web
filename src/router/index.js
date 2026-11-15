@@ -6,6 +6,19 @@ export function createAppRouter(auth) {
     history: createWebHistory(),
     routes: [
       {
+        path: '/',
+        component: () => import('../components/layout/BusinessLayout.vue'),
+        meta: { requiresAuth: true },
+        children: [
+          {
+            path: '',
+            name: 'library',
+            component: () => import('../views/library/LibraryView.vue'),
+            meta: { navigation: { section: 'top', label: '音乐', order: 0 } },
+          },
+        ],
+      },
+      {
         path: '/forgot-password',
         name: 'forgot-password',
         component: () =>
@@ -16,7 +29,6 @@ export function createAppRouter(auth) {
         name: 'auth-scene',
         component: () => import('../components/auth/AuthScene.vue'),
         children: [
-          { path: '', name: 'auth-entry', redirect: { name: 'login' } },
           {
             path: 'login',
             name: 'login',

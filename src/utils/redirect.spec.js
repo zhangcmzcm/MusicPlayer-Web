@@ -7,7 +7,7 @@ const router = createRouter({
   history: createMemoryHistory(),
   routes: [
     { path: '/forgot-password', name: 'forgot-password', component },
-    { path: '/', redirect: '/login' },
+    { path: '/', name: 'library', component, meta: { requiresAuth: true } },
     { path: '/login', name: 'login', component },
     { path: '/register', name: 'register', component },
     { path: '/destination', name: 'destination', component },
@@ -20,7 +20,6 @@ it.each([
   '/forgot-password?redirect=/destination',
   '/register?redirect=/destination',
   '/login',
-  '/',
   '/reg%69ster',
   '//example.test',
   '/%2fexample.test',
@@ -31,6 +30,7 @@ it.each([
   expect(resolveSafeRedirect(router, path)).toBeNull()
 })
 it('should_preserve_safe_destination_query_and_hash', () => {
+  expect(resolveSafeRedirect(router, '/')).toBe('/')
   expect(resolveSafeRedirect(router, '/destination?sort=name#section')).toBe(
     '/destination?sort=name#section',
   )

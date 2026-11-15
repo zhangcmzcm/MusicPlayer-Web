@@ -1,6 +1,6 @@
 # LIB-01 曲库主页实施计划
 
-> 面向执行 Agent。按人类确认的执行方式逐项完成复选步骤，Codex 负责实现，Claude 按仓库协议独立审核。实施前请人类审阅本计划并选择当前会话实现或分任务子 Agent 实现。
+> 面向执行 Agent。按人类确认的执行方式逐项完成复选步骤，Codex 负责实现，Claude 按仓库协议独立审核。人类已批准当前会话实现，由 Codex 编写并完成验证。
 
 **目标**为已认证用户交付可浏览、搜索、排序和分页的统一已发布曲库，并接入站点主页及登录默认落点。
 
@@ -220,7 +220,7 @@ it('should_recover_from_a_legal_empty_page', async () => {
 
 **接口**在 `/` 增加受保护的 BusinessLayout 父路由和空子路径 `library`，复用既有 AuthScene 的 login、register 子路由。根地址由真实曲库子路由匹配，登录成功执行安全目标或 `{ name: 'library' }`。
 
-- [ ] 写真实 router 的匿名与已认证入口用例，保留认证、角色守卫与未知路由行为。
+- [x] 写真实 router 的匿名与已认证入口用例，保留认证、角色守卫与未知路由行为。
 
 ```js
 it('should_open_library_after_authenticated_root_navigation', async () => {
@@ -236,13 +236,13 @@ it('should_open_library_after_authenticated_root_navigation', async () => {
 })
 ```
 
-- [ ] 执行 `npm run test:unit -- src/router/index.spec.js src/utils/redirect.spec.js src/router/guards.spec.js` 观察红测，完成根路由与安全根路径回跳断言。
-- [ ] LoginView 在登录完成后进入安全目标或曲库。导航失败时保留已建立的会话与真实“进入曲库”恢复操作，由新页面负责自己的焦点。为成功导航、守卫拒绝和导航抛错各补测试。
-- [ ] 复跑 LoginView.spec 与 useLogin.spec，保留认证流程内部 `flow.step=success`、敏感字段清理、注册／重置的登录预填和身份选择。
-- [ ] mockApi 扩展为 `mockApi(page, handler, { defaultLibraryPage = true } = {})`。认证测试在调用 handler 前，为精确匹配的默认曲库 GET 提供空页，避免既有 postDataJSON 处理器消费 GET。曲库 e2e 使用 false 和自定义响应。
-- [ ] mockApi 响应支持 `rawBody` 和 `contentType`，既有 body 仍经 JSON.stringify。默认空页仅匹配 GET、PUBLISHED、page=0、size=20、createdAt,desc 及空 q，其他请求继续由 handler 明确处理。
-- [ ] 登录 e2e 的成功可见结果调整为真实曲库标题与地址，身份断言核对当前会话。认证参数、公开接口 Bearer 边界、防重复、前导零和管理员 USER／ADMIN 身份行为继续保留。
-- [ ] main.spec 在应用启动前安装 adapter，显式 mock 新增的首页读取。运行本任务定向单元和 `npm run test:e2e -- e2e/login.spec.js e2e/registration.spec.js e2e/password-reset.spec.js`，通过后提交“feat: 接入曲库默认路由与登录落点”。
+- [x] 执行 `npm run test:unit -- src/router/index.spec.js src/utils/redirect.spec.js src/router/guards.spec.js` 观察红测，完成根路由与安全根路径回跳断言。
+- [x] LoginView 在登录完成后进入安全目标或曲库。导航失败时保留已建立的会话与真实“进入曲库”恢复操作，由新页面负责自己的焦点。为成功导航、守卫拒绝和导航抛错各补测试。
+- [x] 复跑 LoginView.spec 与 useLogin.spec，保留认证流程内部 `flow.step=success`、敏感字段清理、注册／重置的登录预填和身份选择。
+- [x] mockApi 扩展为 `mockApi(page, handler, { defaultLibraryPage = true } = {})`。认证测试在调用 handler 前，为精确匹配的默认曲库 GET 提供空页，避免既有 postDataJSON 处理器消费 GET。曲库 e2e 使用 false 和自定义响应。
+- [x] mockApi 响应支持 `rawBody` 和 `contentType`，既有 body 仍经 JSON.stringify。默认空页仅匹配 GET、PUBLISHED、page=0、size=20、createdAt,desc 及空 q，其他请求继续由 handler 明确处理。
+- [x] 登录 e2e 的成功可见结果调整为真实曲库标题与地址，身份断言核对当前会话。认证参数、公开接口 Bearer 边界、防重复、前导零和管理员 USER／ADMIN 身份行为继续保留。
+- [x] main.spec 在应用启动前安装 adapter，显式 mock 新增的首页读取。运行本任务定向单元和 `npm run test:e2e -- e2e/login.spec.js e2e/registration.spec.js e2e/password-reset.spec.js`，通过后提交“feat: 接入曲库默认路由与登录落点”。
 
 ## 任务 5 主流程、完整验证和功能文档
 
@@ -290,7 +290,7 @@ test('should_browse_search_and_restore_library_query', async ({ page }) => {
 - API、查询模型、fixtures、composable 和页面间的名称及返回字段按文件地图统一。新增源码均有同目录 spec。
 - 五项 Review Focus 分别落入任务 1—5 的具体测试。整体错误处理继续消费稳定 code，图片错误在公共拦截前完成格式转换。
 - `getSessionRevision` 的现有调用兼容性、相同 Token 的新会话保护、默认登录 GET 对既有 mock 的影响均有明确回归位置。
-- 当前完成实施规划与文档检查。复选框对应后续实际执行记录，业务测试数量、运行结果和覆盖率在执行后填写。
+- 任务 1—4 已实现并完成定向回归，任务 5 正在执行完整验证与独立审核。
 
 ## 实际执行记录
 
@@ -305,3 +305,6 @@ test('should_browse_search_and_restore_library_query', async ({ page }) => {
 
 - 任务 3 首轮 19 条用例为 12 通过、7 失败，并出现 Element Plus Select 的递归更新。定位为 VTU 全局 Teleport stub 反复销毁选项造成，测试改用真实 Teleport 目标。表单校验反馈使用等待断言。复跑 19 通过、0 失败、0 未处理错误，lint 零警告。
 
+- 任务 4 路由红测 1 通过、2 失败，确认旧根地址仍进入登录。真实启动进一步发现 Teleport 目标与父布局同轮挂载的时序问题，使用 defer 修复。定向 96 条单测及认证关联 78 条 e2e 全部通过。
+- 任务 5 曲库 e2e 首轮 14 通过、1 失败，排序输入框被组件文字覆盖导致定位超时，改用真实键盘操作后 15 通过。人工截图发现 320px 长歌名挤出时长，改固定表格布局并新增内部溢出断言，复跑 15 通过。
+- 完整覆盖率初跑 471 通过，每个改动业务文件达到行 80%／分支 70%。npm run check 首轮在计划文件格式检查失败，统一格式后重新执行。

@@ -110,7 +110,7 @@ function position(index) {
       :data="page.items"
       row-key="id"
       class="song-table"
-      table-layout="auto"
+      table-layout="fixed"
     >
       <el-table-column
         type="index"

@@ -5,6 +5,23 @@ import ElementPlus from 'element-plus'
 import App from '../App.vue'
 import { createAppRouter } from './index.js'
 import { useAuthStore } from '../stores/auth.js'
+import { authentication } from '../test/factories.js'
+
+it.each(['USER', 'ADMIN'])(
+  'should_open_library_for_authenticated_%s',
+  async (role) => {
+    const auth = {
+      isAuthenticated: true,
+      session: authentication(role),
+      clearSession: vi.fn(),
+    }
+    const router = createAppRouter(auth)
+    await router.push('/')
+    expect(router.currentRoute.value.name).toBe('library')
+    expect(router.currentRoute.value.meta.requiresAuth).toBe(true)
+    expect(router.currentRoute.value.meta.navigation.label).toBe('音乐')
+  },
+)
 
 it('should_keep_parent_scene_mounted_between_its_child_routes', async () => {
   const pinia = createPinia(),

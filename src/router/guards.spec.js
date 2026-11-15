@@ -10,7 +10,7 @@ const router = createRouter({
   routes: [
     { path: '/login', name: 'login', component: {} },
     { path: '/tracks', name: 'tracks', component: {} },
-    { path: '/', redirect: '/login' },
+    { path: '/', name: 'library', component: {}, meta: { requiresAuth: true } },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: {} },
   ],
 })
@@ -23,7 +23,6 @@ describe('safe navigation', () => {
     '/%5cevil.test',
     '/%00evil',
     '/login',
-    '/',
     '/missing',
     '/%zz',
     null,
@@ -32,6 +31,7 @@ describe('safe navigation', () => {
     expect(resolveSafeRedirect(router, value)).toBeNull()
   })
   it('should_preserve_existing_internal_query', () => {
+    expect(resolveSafeRedirect(router, '/?page=2')).toBe('/?page=2')
     expect(resolveSafeRedirect(router, '/tracks?page=2')).toBe('/tracks?page=2')
   })
   it('should_redirect_anonymous_protected_navigation', () => {

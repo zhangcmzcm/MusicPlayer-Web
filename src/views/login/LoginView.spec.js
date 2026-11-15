@@ -5,6 +5,7 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import ElementPlus from 'element-plus'
 import LoginView from './LoginView.vue'
 import AuthScene from '../../components/auth/AuthScene.vue'
+import App from '../../App.vue'
 import { useAuthStore } from '../../stores/auth.js'
 import * as api from '../../api/auth.js'
 import { authenticated, deferred, ticket } from '../../test/factories.js'
@@ -15,17 +16,27 @@ beforeEach(() => {
   vi.mocked(api.login).mockReset()
   vi.mocked(api.sendLoginCode).mockReset()
 })
-async function setup() {
+async function setup(path = '/login') {
   const pinia = createPinia()
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
+      { path: '/', name: 'library', component: { template: '<h1>曲库</h1>' } },
+      {
+        path: '/destination',
+        name: 'destination',
+        component: { template: '<h1>安全目标</h1>' },
+      },
       {
         path: '/forgot-password',
         name: 'forgot-password',
         component: { template: '<div />' },
       },
-      { path: '/login', name: 'login', component: LoginView },
+      {
+        path: '/login',
+        component: AuthScene,
+        children: [{ path: '', name: 'login', component: LoginView }],
+      },
       {
         path: '/register',
         name: 'register',
@@ -33,15 +44,20 @@ async function setup() {
       },
     ],
   })
-  await router.push('/login')
-  const wrapper = mount(AuthScene, {
+  await router.push(path)
+  const wrapper = mount(App, {
     attachTo: document.body,
     global: {
       plugins: [pinia, router, ElementPlus],
     },
   })
   await flushPromises()
-  return { wrapper, auth: useAuthStore(pinia), scene: wrapper.vm.scene }
+  return {
+    wrapper,
+    auth: useAuthStore(pinia),
+    scene: wrapper.getComponent(AuthScene).vm.scene,
+    router,
+  }
 }
 async function fill(
   wrapper,
@@ -63,18 +79,15 @@ it('should_validate_empty_and_short_password_without_request', async () => {
   await vi.waitFor(() => expect(wrapper.text()).toContain('密码需为 8–128'))
   expect(api.login).not.toHaveBeenCalled()
 })
-it('should_authenticate_and_show_real_success_state', async () => {
+it('should_authenticate_and_enter_library', async () => {
   vi.mocked(api.login).mockResolvedValue(authenticated())
-  const { wrapper, scene } = await setup()
+  const { wrapper, router, auth } = await setup()
   await fill(wrapper)
   await wrapper.get('form').trigger('submit')
   await flushPromises()
-  expect(wrapper.get('[data-testid="login-success"]').text()).toContain(
-    'listener',
-  )
-  expect(wrapper.get('[data-testid="session-role"]').text()).toContain('用户')
-  expect(scene.step).toBe('success')
-  expect(document.activeElement.textContent).toBe('登录成功')
+  expect(router.currentRoute.value.name).toBe('library')
+  expect(auth.session.user.role).toBe('USER')
+  expect(wrapper.get('h1').text()).toBe('曲库')
 })
 it('should_expand_alternatives_and_keep_email_when_switching_to_code', async () => {
   const { wrapper } = await setup()
@@ -152,7 +165,7 @@ it.each(['USER', 'ADMIN'])(
         roleSelection: ticket(),
       })
       .mockResolvedValueOnce(authenticated(role))
-    const { wrapper, scene } = await setup()
+    const { wrapper, scene, router, auth } = await setup()
     await fill(wrapper)
     await wrapper.get('form').trigger('submit')
     await flushPromises()
@@ -160,9 +173,47 @@ it.each(['USER', 'ADMIN'])(
     await vi.advanceTimersByTimeAsync(1100)
     await wrapper.get(`[data-testid="role-${role}"]`).trigger('click')
     await flushPromises()
-    expect(wrapper.get('[data-testid="session-role"]').text()).toContain(
-      role === 'ADMIN' ? '管理员' : '用户',
+    expect(router.currentRoute.value.name).toBe('library')
+    expect(auth.session.user.role).toBe(role)
+  },
+)
+
+it('should_prefer_safe_redirect_after_login', async () => {
+  api.login.mockResolvedValue(authenticated())
+  const { wrapper, router } = await setup('/login?redirect=/destination')
+  await fill(wrapper)
+  await wrapper.get('form').trigger('submit')
+  await flushPromises()
+  expect(router.currentRoute.value.name).toBe('destination')
+})
+
+it.each(['guard', 'exception'])(
+  'should_recover_%s_navigation_without_another_login',
+  async (kind) => {
+    api.login.mockResolvedValue(authenticated())
+    const { wrapper, router, auth } = await setup()
+    let removeGuard
+    if (kind === 'guard') removeGuard = router.beforeEach(() => false)
+    const replace =
+      kind === 'exception'
+        ? vi
+            .spyOn(router, 'replace')
+            .mockRejectedValueOnce(Error('private failure'))
+        : null
+    await fill(wrapper)
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.get('[data-testid="login-success"]').text()).toContain(
+      '暂时无法进入曲库',
     )
+    expect(wrapper.text()).not.toContain('private failure')
+    expect(auth.session.user.role).toBe('USER')
+    removeGuard?.()
+    replace?.mockRestore()
+    await wrapper.get('[data-testid="login-success"] button').trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.name).toBe('library')
+    expect(api.login).toHaveBeenCalledTimes(1)
   },
 )
 

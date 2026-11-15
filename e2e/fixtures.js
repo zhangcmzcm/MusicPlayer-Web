@@ -29,17 +29,44 @@ export function selection() {
   }
 }
 
-export async function mockApi(page, handler) {
+export async function mockApi(
+  page,
+  handler,
+  { defaultLibraryPage = true } = {},
+) {
   await page.route('**/api/v1/**', async (route) => {
-    const response = await handler(route.request())
+    const request = route.request()
+    const url = new URL(request.url())
+    const query = url.searchParams
+    const defaultPage =
+      defaultLibraryPage &&
+      request.method() === 'GET' &&
+      url.pathname === '/api/v1/tracks' &&
+      query.get('status') === 'PUBLISHED' &&
+      query.get('page') === '0' &&
+      query.get('size') === '20' &&
+      query.get('sort') === 'createdAt,desc' &&
+      !query.get('q')
+    const response = defaultPage
+      ? {
+          body: {
+            items: [],
+            page: 0,
+            size: 20,
+            totalElements: 0,
+            totalPages: 0,
+            hasNext: false,
+          },
+        }
+      : await handler(request)
     if (!response) {
       await route.abort('failed')
       throw Error('Unexpected mocked API request')
     }
     await route.fulfill({
       status: response.status || 200,
-      contentType: 'application/json',
-      body: JSON.stringify(response.body),
+      contentType: response.contentType || 'application/json',
+      body: response.rawBody ?? JSON.stringify(response.body),
       headers: response.headers,
     })
   })

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, inject, nextTick, ref, watch } from 'vue'
+import { computed, inject, nextTick, onScopeDispose, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth.js'
 import { useLogin } from '../../composables/useLogin.js'
@@ -30,6 +30,28 @@ const {
   loginRemaining,
 } = flow
 const formRef = ref()
+const navigating = ref(false)
+const navigationFailed = ref(false)
+let disposed = false
+onScopeDispose(() => {
+  disposed = true
+})
+async function enterLibrary() {
+  if (navigating.value) return
+  navigating.value = true
+  navigationFailed.value = false
+  try {
+    const target = resolveSafeRedirect(router, route.query.redirect) || {
+      name: 'library',
+    }
+    const failure = await router.replace(target)
+    if (failure && !disposed) navigationFailed.value = true
+  } catch {
+    if (!disposed) navigationFailed.value = true
+  } finally {
+    navigating.value = false
+  }
+}
 const reset = useAuthFlowStore().takePasswordResetSuccess()
 if (reset) flow.prefillResetEmail(reset.email)
 const registered = useAuthFlowStore().takeRegistrationSuccess()
@@ -56,8 +78,8 @@ watch(
   async (value, previous) => {
     scene.step = value
     if (value === 'success') {
-      const target = resolveSafeRedirect(router, route.query.redirect)
-      if (target) await router.replace(target)
+      await enterLibrary()
+      return
     }
     if (previous) {
       await nextTick()
@@ -169,10 +191,19 @@ function updateForm(value) {
             stroke-width="2"
           />
         </svg>
-        <p>{{ auth.session.user.username }}，欢迎回来。</p>
+        <p>{{ auth.session?.user.username }}，欢迎回来。</p>
         <p class="session-role" data-testid="session-role">
-          本次身份：{{ auth.session.user.role === 'ADMIN' ? '管理员' : '用户' }}
+          本次身份：{{
+            auth.session?.user.role === 'ADMIN' ? '管理员' : '用户'
+          }}
         </p>
+        <p v-if="navigationFailed" role="alert">暂时无法进入曲库，请重试。</p>
+        <el-button
+          :loading="navigating"
+          :disabled="navigating"
+          @click="enterLibrary"
+          >进入曲库</el-button
+        >
       </div>
     </Transition>
   </section>

@@ -443,7 +443,7 @@ test('should_login_with_email_and_restore_same_tab_session', async ({
   await page.goto('/login')
   await fillPassword(page)
   await page.getByTestId('login-submit').click()
-  await expect(page.getByTestId('login-success')).toBeVisible()
+  await expectLibrary(page)
   expect(requests).toEqual([
     {
       loginType: 'EMAIL_PASSWORD',
@@ -452,7 +452,7 @@ test('should_login_with_email_and_restore_same_tab_session', async ({
     },
   ])
   await page.reload()
-  await expect(page.getByTestId('login-success')).toBeVisible()
+  await expectLibrary(page)
   expect(requests).toHaveLength(1)
 })
 
@@ -468,7 +468,7 @@ test('should_login_with_username_password', async ({ page }) => {
   await page.getByTestId('username-input').fill('listener')
   await page.getByTestId('password-input').fill('sample-password')
   await page.getByTestId('password-input').press('Enter')
-  await expect(page.getByTestId('login-success')).toBeVisible()
+  await expectLibrary(page)
   expect(sent).toEqual({
     loginType: 'USERNAME_PASSWORD',
     account: 'listener',
@@ -498,7 +498,7 @@ test('should_send_code_and_preserve_leading_zero', async ({ page }) => {
   await expect(page.getByTestId('send-code')).toBeDisabled()
   await page.getByTestId('code-input').fill('012345')
   await page.getByTestId('login-submit').click()
-  await expect(page.getByTestId('login-success')).toBeVisible()
+  await expectLibrary(page)
   expect(requests).toEqual([
     { email: 'listener@example.test', purpose: 'LOGIN' },
     { loginType: 'EMAIL_CODE', email: 'listener@example.test', code: '012345' },
@@ -530,9 +530,7 @@ for (const role of ['USER', 'ADMIN'])
       fullPage: true,
     })
     await page.getByTestId(`role-${role}`).click()
-    await expect(page.getByTestId('session-role')).toHaveText(
-      `本次身份：${role === 'ADMIN' ? '管理员' : '用户'}`,
-    )
+    await expectLibrary(page, role)
     expect(requests[1]).toEqual({
       loginType: 'ROLE_SELECTION',
       loginTicket: 'e2e-selection-ticket',
@@ -552,7 +550,7 @@ test('should_show_network_failure_and_recover_without_reloading', async ({
   await page.unroute('**/api/v1/**')
   await mockApi(page, () => ({ body: authenticated() }))
   await page.getByTestId('login-submit').click()
-  await expect(page.getByTestId('login-success')).toBeVisible()
+  await expectLibrary(page)
 })
 
 test('should_not_submit_during_ime_composition', async ({ page }) => {
@@ -570,7 +568,7 @@ test('should_not_submit_during_ime_composition', async ({ page }) => {
   })
   expect(calls).toBe(0)
   await page.getByTestId('password-input').press('Enter')
-  await expect(page.getByTestId('login-success')).toBeVisible()
+  await expectLibrary(page)
   expect(calls).toBe(1)
 })
 
@@ -593,7 +591,7 @@ test('should_keep_invalid_credentials_on_login_and_recover', async ({
   await expect(page.getByTestId('login-error')).not.toContainText('SQL')
   await expect(page).toHaveURL(/\/login$/)
   await page.getByTestId('login-submit').click()
-  await expect(page.getByTestId('login-success')).toBeVisible()
+  await expectLibrary(page)
 })
 
 test('should_respect_retry_after_and_prevent_duplicate_requests', async ({
@@ -639,7 +637,7 @@ test('should_send_only_one_request_while_login_is_pending', async ({
   })
   expect(calls).toBe(1)
   release()
-  await expect(page.getByTestId('login-success')).toBeVisible()
+  await expectLibrary(page)
 })
 
 test('should_not_restore_an_admin_ticket_on_refresh', async ({ page }) => {
@@ -680,7 +678,7 @@ test('should_show_mobile_roles_without_motion_and_support_keyboard', async ({
   })
   await button.focus()
   await page.keyboard.press('Enter')
-  await expect(page.getByTestId('session-role')).toContainText('管理员')
+  await expectLibrary(page, 'ADMIN')
 })
 
 test('should_show_403_and_restart_after_ticket_failure', async ({ page }) => {
@@ -789,9 +787,7 @@ for (const role of ['USER', 'ADMIN']) {
     await page.getByTestId('password-input').fill('sample-password')
     await page.getByTestId('login-submit').click()
     await page.getByTestId(`role-${role}`).click()
-    await expect(page.getByTestId('session-role')).toHaveText(
-      `本次身份：${role === 'ADMIN' ? '管理员' : '用户'}`,
-    )
+    await expectLibrary(page, role)
     await expect(page.getByTestId('login-error')).toHaveCount(0)
     expect(requests[1]).toEqual({
       loginType: 'ROLE_SELECTION',
@@ -799,10 +795,24 @@ for (const role of ['USER', 'ADMIN']) {
       loginRole: role,
     })
     await page.reload()
-    await expect(page.getByTestId('login-success')).toBeVisible()
-    await expect(page.getByTestId('session-role')).toHaveText(
-      `本次身份：${role === 'ADMIN' ? '管理员' : '用户'}`,
-    )
+    await expectLibrary(page)
+    await expectLibrary(page, role)
     expect(requests).toHaveLength(2)
   })
+}
+
+async function expectLibrary(page, role) {
+  await expect(
+    page.getByRole('heading', { name: '曲库', exact: true }),
+  ).toBeVisible()
+  expect(new URL(page.url()).pathname).toBe('/')
+  if (role)
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            JSON.parse(sessionStorage.getItem('music-web.session')).user.role,
+        ),
+      )
+      .toBe(role)
 }
