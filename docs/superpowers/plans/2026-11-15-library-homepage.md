@@ -250,7 +250,7 @@ it('should_open_library_after_authenticated_root_navigation', async () => {
 
 **接口**使用真实应用入口、任务 4 的 mockApi 选项、任务 1 fixtures 和当前 sessionStorage 会话格式，业务网络完全由 mock 控制。
 
-- [ ] 写曲库主流程，同文件 beforeEach 使用 mockApi 和下述 false 选项安装 login、tracks、cover 的独立响应。先完成登录，再搜索、排序和翻页，断言请求参数与用户可见歌曲变化。
+- [x] 写曲库主流程，同文件 beforeEach 使用 mockApi 和下述 false 选项安装 login、tracks、cover 的独立响应。先完成登录，再搜索、排序和翻页，断言请求参数与用户可见歌曲变化。
 
 ```js
 test('should_browse_search_and_restore_library_query', async ({ page }) => {
@@ -276,13 +276,13 @@ test('should_browse_search_and_restore_library_query', async ({ page }) => {
 })
 ```
 
-- [ ] 在同文件明确设置 defaultLibraryPage=false 的 handler，逐项核对 Authorization、固定 PUBLISHED、原始 q、排序及分页参数。补充无封面、图片失败、空页、合法 null、429、网络失败重试、401 与旧会话迟到 401 用例。
-- [ ] 在 1366×768、1440×900、1920×1080、320×740、390×844 检查列表、长歌名、错误、分页和真实可用导航，查看代表截图并记录纵向滚动与键盘可达性。
-- [ ] 先运行 `npm run test:e2e -- e2e/library.spec.js`，再修复确认成立的问题并重跑，记录实际失败和修正。
-- [ ] 顺序执行 `npm ci`、`npm run check`、`npm run test:unit:coverage -- --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=html`、`npm run test:e2e`。必要浏览器安装使用 `npx playwright install chromium`。
-- [ ] 逐文件核对 API、工具、composable、资源／展示组件、布局、页面、http、main、LoginView 的完整文件覆盖率。router 的纯声明适用性单列并给出真实导航证据。
-- [ ] 功能文档记录权限、字段行为、导航与请求决策、合法 null、资源释放、依赖名称版本、真实命令和测试数量、覆盖率来源、视觉检查与未验证环境。
-- [ ] 检查 Git 文件归属和文档链接，提交“docs: 补齐曲库功能说明与验证材料”，按 AGENTS.md 模板提交该切片首次实现审核。各开发任务的局部检查与 Codex 自检作为提交材料，实质审核轮次按 Claude 对完整切片的审核计数。
+- [x] 在同文件明确设置 defaultLibraryPage=false 的 handler，逐项核对 Authorization、固定 PUBLISHED、原始 q、排序及分页参数。补充无封面、图片失败、空页、合法 null、429、网络失败重试、401 与旧会话迟到 401 用例。
+- [x] 在 1366×768、1440×900、1920×1080、320×740、390×844 检查列表、长歌名、错误、分页和真实可用导航，查看代表截图并记录纵向滚动与键盘可达性。
+- [x] 先运行 `npm run test:e2e -- e2e/library.spec.js`，再修复确认成立的问题并重跑，记录实际失败和修正。
+- [x] 顺序执行 `npm ci`、`npm run check`、`npm run test:unit:coverage -- --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=html`、`npm run test:e2e`。必要浏览器安装使用 `npx playwright install chromium`。
+- [x] 逐文件核对 API、工具、composable、资源／展示组件、布局、页面、http、main、LoginView 的完整文件覆盖率。router 的纯声明适用性单列并给出真实导航证据。
+- [x] 功能文档记录权限、字段行为、导航与请求决策、合法 null、资源释放、依赖名称版本、真实命令和测试数量、覆盖率来源、视觉检查与未验证环境。
+- [x] 检查 Git 文件归属和文档链接，提交“docs: 补齐曲库功能说明与验证材料”，按 AGENTS.md 模板提交该切片首次实现审核。各开发任务的局部检查与 Codex 自检作为提交材料，实质审核轮次按 Claude 对完整切片的审核计数。
 
 ## 计划自检与当前状态
 
@@ -290,7 +290,7 @@ test('should_browse_search_and_restore_library_query', async ({ page }) => {
 - API、查询模型、fixtures、composable 和页面间的名称及返回字段按文件地图统一。新增源码均有同目录 spec。
 - 五项 Review Focus 分别落入任务 1—5 的具体测试。整体错误处理继续消费稳定 code，图片错误在公共拦截前完成格式转换。
 - `getSessionRevision` 的现有调用兼容性、相同 Token 的新会话保护、默认登录 GET 对既有 mock 的影响均有明确回归位置。
-- 任务 1—4 已实现并完成定向回归，任务 5 正在执行完整验证与独立审核。
+- 任务 1—5 的实现、文档与自验已完成，已准备首次独立审核材料，审核结论待 Claude 核实。
 
 ## 实际执行记录
 
@@ -308,3 +308,6 @@ test('should_browse_search_and_restore_library_query', async ({ page }) => {
 - 任务 4 路由红测 1 通过、2 失败，确认旧根地址仍进入登录。真实启动进一步发现 Teleport 目标与父布局同轮挂载的时序问题，使用 defer 修复。定向 96 条单测及认证关联 78 条 e2e 全部通过。
 - 任务 5 曲库 e2e 首轮 14 通过、1 失败，排序输入框被组件文字覆盖导致定位超时，改用真实键盘操作后 15 通过。人工截图发现 320px 长歌名挤出时长，改固定表格布局并新增内部溢出断言，复跑 15 通过。
 - 完整覆盖率初跑 471 通过，每个改动业务文件达到行 80%／分支 70%。npm run check 首轮在计划文件格式检查失败，统一格式后重新执行。
+
+- 最终 npm ci 沙箱外按锁文件成功安装，Node v22.19.0／npm 10.9.3。npm run check 退出 0，lint 零警告、格式通过、471 条单测通过、生产构建成功。构建保留全量 Element Plus 下的既有大包提示。覆盖率复跑 471 通过，逐文件全部达标。完整 Playwright 93 通过、0 失败、0 跳过、0 重试／flaky／预期失败，新增曲库用例无未处理页面异常。
+- 文档本地链接检查 57 个目标全部存在，初次完整实现审核材料位于 docs/reviews/2026-11-15-library-review-request.md。
