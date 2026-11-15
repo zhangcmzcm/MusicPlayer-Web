@@ -192,4 +192,33 @@ describe('HTTP contract', () => {
     expect(onUnauthorized).not.toHaveBeenCalled()
     http.defaults.adapter = original
   })
+  it('should_preserve_a_new_revision_with_the_same_token', async () => {
+    const original = http.defaults.adapter
+    const gate = deferred()
+    const session = authentication()
+    let revision = 1
+    const onUnauthorized = vi.fn()
+    configureAuth({
+      getSession: () => session,
+      getSessionRevision: () => revision,
+      onUnauthorized,
+    })
+    http.defaults.adapter = vi.fn(async (config) => {
+      await gate.promise
+      throw {
+        config,
+        response: { status: 401, data: { code: 'TOKEN_REVOKED' } },
+      }
+    })
+    try {
+      const pending = http.get('/tracks').catch((error) => error)
+      await vi.waitFor(() => expect(http.defaults.adapter).toHaveBeenCalled())
+      revision = 2
+      gate.resolve()
+      expect((await pending).status).toBe(401)
+      expect(onUnauthorized).not.toHaveBeenCalled()
+    } finally {
+      http.defaults.adapter = original
+    }
+  })
 })

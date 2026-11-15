@@ -17,6 +17,7 @@ auth.restoreSession()
 const router = createAppRouter(auth)
 configureAuth({
   getSession: () => auth.session,
+  getSessionRevision: () => auth.getSessionRevision(),
   onUnauthorized: () => {
     auth.clearSession()
     ElMessage.error('登录状态已失效，请重新登录。')

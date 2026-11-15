@@ -6,9 +6,13 @@ export const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
   timeout: 15000,
 })
-let auth = { getSession: () => null, onUnauthorized: () => {} }
+let auth = {
+  getSession: () => null,
+  getSessionRevision: () => 0,
+  onUnauthorized: () => {},
+}
 export function configureAuth(callbacks) {
-  auth = callbacks
+  auth = { getSessionRevision: () => 0, ...callbacks }
 }
 
 http.interceptors.request.use((config) => {
@@ -17,6 +21,7 @@ http.interceptors.request.use((config) => {
     if (session) {
       config.headers.set('Authorization', `Bearer ${session.accessToken}`)
       config.sessionToken = session.accessToken
+      config.sessionRevision = auth.getSessionRevision()
     }
   }
   return config
@@ -63,7 +68,8 @@ http.interceptors.response.use(
       status === 401 &&
       !config?.publicRequest &&
       config?.sessionToken &&
-      config.sessionToken === auth.getSession()?.accessToken
+      config.sessionToken === auth.getSession()?.accessToken &&
+      config.sessionRevision === auth.getSessionRevision()
     )
       auth.onUnauthorized()
     return Promise.reject(converted)

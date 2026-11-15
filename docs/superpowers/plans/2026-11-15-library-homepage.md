@@ -144,7 +144,7 @@ it('should_preserve_long_ids_and_send_published_scope', async () => {
 
 `configureAuth` 增加 `getSessionRevision` 回调并为已有调用提供 0 默认值，main 注入现有 `auth.getSessionRevision`。受保护请求记录 token 和 revision，当前 401 同时匹配两者才调用现有退出回调。
 
-- [ ] 写真实 adapter 的同 Token／新 revision 失败用例，继续保留公开 401、当前 401 和新 Token 的既有测试。
+- [x] 写真实 adapter 的同 Token／新 revision 失败用例，继续保留公开 401、当前 401 和新 Token 的既有测试。
 
 ```js
 it('should_preserve_new_revision_when_old_401_uses_same_token', async () => {
@@ -170,11 +170,11 @@ it('should_preserve_new_revision_when_old_401_uses_same_token', async () => {
 })
 ```
 
-- [ ] 运行 `npm run test:unit -- src/api/http.spec.js`，观察该新增用例红测，再接入 revision 保护并复跑。
-- [ ] 为 useTrackList 编写失败用例，利用现有 deferred 和 effectScope 构造 A 查询迟到、B 查询先完成。断言最终 page 属于 B，卸载后取消、旧会话结果忽略，queryRef 为 null 时进入可恢复客户端状态。
-- [ ] 实现查询请求序号、AbortController 和作用域清理。会话更替时按当前会话重新读取。429 倒计时仅使用有效 Retry-After，结束后恢复手动重试，清空 q 可请求普通列表。覆盖网络错误、超时、503 和取消静默。
-- [ ] 为 TrackCover 写 Object URL 创建／释放用例。更换 ID、会话或卸载时取消旧读取，Object URL 只为当前有效响应创建，已创建的旧 URL 及时释放。无封面、对象 404、图片解码失败分别呈现缺省图。
-- [ ] 实现资源组件并运行 `npm run test:unit -- src/composables/useTrackList.spec.js src/components/library/TrackCover.spec.js src/api/http.spec.js src/main.spec.js`，通过后提交“feat: 完善曲库请求与封面生命周期”。
+- [x] 运行 `npm run test:unit -- src/api/http.spec.js`，观察该新增用例红测，再接入 revision 保护并复跑。
+- [x] 为 useTrackList 编写失败用例，利用现有 deferred 和 effectScope 构造 A 查询迟到、B 查询先完成。断言最终 page 属于 B，卸载后取消、旧会话结果忽略，queryRef 为 null 时进入可恢复客户端状态。
+- [x] 实现查询请求序号、AbortController 和作用域清理。会话更替时按当前会话重新读取。429 倒计时仅使用有效 Retry-After，结束后恢复手动重试，清空 q 可请求普通列表。覆盖网络错误、超时、503 和取消静默。
+- [x] 为 TrackCover 写 Object URL 创建／释放用例。更换 ID、会话或卸载时取消旧读取，Object URL 只为当前有效响应创建，已创建的旧 URL 及时释放。无封面、对象 404、图片解码失败分别呈现缺省图。
+- [x] 实现资源组件并运行 `npm run test:unit -- src/composables/useTrackList.spec.js src/components/library/TrackCover.spec.js src/api/http.spec.js src/main.spec.js`，通过后提交“feat: 完善曲库请求与封面生命周期”。
 
 ## 任务 3 曲库布局、导航与展示组件
 
@@ -299,3 +299,6 @@ test('should_browse_search_and_restore_library_query', async ({ page }) => {
 - 依赖安装在沙箱内遇到 registry DNS 的 ENOTFOUND，获准在沙箱外重试后成功，新增 lossless-json 4.3.3。安装审计报告 6 项中危，309 个包。
 - 任务 1 首轮实现运行 72 条用例，71 通过、1 失败。畸形成功 JSON 在响应转换抛错时被公共层映射为网络错误，改为由领域响应校验产生 INVALID_RESPONSE。
 - 定向复跑 72 通过、0 失败、0 跳过，npm run lint 退出 0、零警告。
+
+- 任务 2 红测复现相同 Token 的新会话被旧 401 清理，22 条通过、1 条失败，两个新模块尚未创建。实现 revision 比较、请求取消和资源释放后，定向 46 条全部通过，lint 零警告。
+- 任务 3 首次红测为四个组件文件缺失，4 个测试文件失败，用例尚未开始。
