@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onScopeDispose, reactive, ref, watch } from 'vue'
 import { getErrorMessage } from '../../utils/errors.js'
-import { formatDuration } from '../../utils/trackList.js'
+import { formatDuration, formatTrackStatus } from '../../utils/trackList.js'
 import TrackCover from './TrackCover.vue'
 
 const props = defineProps({
@@ -10,9 +10,11 @@ const props = defineProps({
   pending: Boolean,
   error: { type: Object, default: null },
   retryRemaining: { type: Number, default: 0 },
+  showStatus: Boolean,
+  emptyText: { type: String, default: '' },
 })
 const emit = defineEmits(['page-changed', 'retry', 'reset-page'])
-const compactMedia = window.matchMedia('(max-width: 720px)')
+const compactMedia = window.matchMedia('(max-width: 1100px)')
 const compact = ref(compactMedia.matches)
 function updateCompact(event) {
   compact.value = event.matches
@@ -37,7 +39,7 @@ const emptyMessage = computed(() =>
     ? '当前页暂无歌曲'
     : props.query.q
       ? '没有找到相关歌曲'
-      : '曲库暂时没有歌曲',
+      : props.emptyText || '曲库暂时没有歌曲',
 )
 const pageRules = {
   page: [
@@ -133,6 +135,12 @@ function secondaryText(track) {
                 :title="secondaryText(row)"
                 >{{ secondaryText(row) }}</span
               >
+              <span
+                v-if="showStatus && compact"
+                class="track-status"
+                :class="row.status.toLowerCase()"
+                >{{ formatTrackStatus(row.status) }}</span
+              >
             </div>
           </div>
         </template>
@@ -153,6 +161,13 @@ function secondaryText(track) {
           row.albumName || '未标注专辑'
         }}</template></el-table-column
       >
+      <el-table-column v-if="showStatus && !compact" label="状态" width="90">
+        <template #default="{ row }"
+          ><span class="track-status" :class="row.status.toLowerCase()">{{
+            formatTrackStatus(row.status)
+          }}</span></template
+        >
+      </el-table-column>
       <el-table-column label="时长" :width="compact ? 63 : 88"
         ><template #default="{ row }"
           ><span class="duration" :title="formatDuration(row.durationMs)">{{
@@ -245,6 +260,24 @@ function secondaryText(track) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.track-status {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 3px;
+  background: #edf3e5;
+  color: #526547;
+  font-size: 11px;
+  line-height: 19px;
+  white-space: nowrap;
+}
+.track-status.published {
+  color: #315632;
+  background: #e2efda;
+}
+.track-status.archived {
+  color: #5c6558;
+  background: #eef0ea;
 }
 .song-secondary {
   display: block;

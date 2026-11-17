@@ -18,6 +18,35 @@ function table(props = {}) {
     global: { plugins: [ElementPlus], stubs: { TrackCover: true } },
   })
 }
+it.each([
+  ['DRAFT', '草稿'],
+  ['PUBLISHED', '已发布'],
+  ['ARCHIVED', '已归档'],
+])('should_show_management_status_%s_when_requested', async (status, label) => {
+  const wrapper = table({ showStatus: true, page: trackPage({ status }) })
+  await flushPromises()
+  expect(wrapper.text()).toContain(label)
+  expect(wrapper.findAll('th').some((cell) => cell.text() === '状态')).toBe(
+    true,
+  )
+  await wrapper.setProps({ showStatus: false })
+  expect(wrapper.text()).not.toContain(label)
+})
+it('should_respect_empty_text_search_and_page_priority', async () => {
+  const wrapper = table({
+    emptyText: '当前状态暂无歌曲',
+    page: trackPage({ items: [], totalElements: '0' }),
+    query: { ...DEFAULT_LIBRARY_QUERY, page: 2 },
+  })
+  expect(wrapper.text()).toContain('当前状态暂无歌曲')
+  await wrapper.setProps({
+    query: { ...DEFAULT_LIBRARY_QUERY, page: 2, q: '林间' },
+  })
+  expect(wrapper.text()).toContain('没有找到相关歌曲')
+  await wrapper.setProps({ page: trackPage({ items: [], totalElements: '1' }) })
+  expect(wrapper.text()).toContain('当前页暂无歌曲')
+  expect(wrapper.get('input[aria-label="页码"]').element.value).toBe('3')
+})
 it('should_render_the_song_metadata_and_nullable_fields', async () => {
   const wrapper = table({
     page: trackPage({ albumName: null, durationMs: null }),
@@ -109,8 +138,14 @@ it('should_merge_secondary_metadata_for_compact_screens', async () => {
     addEventListener: (_name, listener) => listeners.push(listener),
     removeEventListener: vi.fn(),
   })
-  const wrapper = table()
+  const wrapper = table({
+    showStatus: true,
+    page: trackPage({ status: 'DRAFT' }),
+  })
   await flushPromises()
+  expect(window.matchMedia).toHaveBeenCalledWith('(max-width: 1100px)')
+  expect(wrapper.text()).toContain('草稿')
+  expect(wrapper.text()).toContain('4:05')
   expect(wrapper.get('.song-secondary').attributes('title')).toBe(
     '林间来信 / 叶影',
   )
