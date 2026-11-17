@@ -10,6 +10,7 @@ import { useAuthStore } from '../../stores/auth.js'
 import * as api from '../../api/auth.js'
 import { authenticated, deferred, ticket } from '../../test/factories.js'
 import { ApiError } from '../../utils/errors.js'
+import { createAuthGuard } from '../../router/guards.js'
 
 vi.mock('../../api/auth.js', () => ({ login: vi.fn(), sendLoginCode: vi.fn() }))
 beforeEach(() => {
@@ -21,6 +22,12 @@ async function setup(path = '/login') {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
+      {
+        path: '/admin/tracks',
+        name: 'track-management',
+        component: { template: '<h1>歌曲管理</h1>' },
+        meta: { requiresAuth: true, roles: ['ADMIN'] },
+      },
       { path: '/', name: 'library', component: { template: '<h1>曲库</h1>' } },
       {
         path: '/destination',
@@ -59,6 +66,24 @@ async function setup(path = '/login') {
     router,
   }
 }
+it.each(['ADMIN', 'USER'])(
+  'should_finish_management_redirect_for_%s_with_real_role_guard',
+  async (role) => {
+    vi.mocked(api.login).mockResolvedValue(authenticated(role))
+    const { wrapper, router, auth } = await setup(
+      '/login?redirect=/admin/tracks%3Fstatus%3DDRAFT',
+    )
+    router.beforeEach(createAuthGuard(auth))
+    await fill(wrapper)
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(router.currentRoute.value.name).toBe(
+      role === 'ADMIN' ? 'track-management' : 'library',
+    )
+    expect(auth.session.user.role).toBe(role)
+    expect(wrapper.find('[data-testid="login-error"]').exists()).toBe(false)
+  },
+)
 async function fill(
   wrapper,
   email = 'listener@example.test',

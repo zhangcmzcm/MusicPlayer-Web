@@ -11,6 +11,17 @@ export function createAppRouter(auth) {
         meta: { requiresAuth: true },
         children: [
           {
+            path: 'admin/tracks',
+            name: 'track-management',
+            component: () =>
+              import('../views/management/TrackManagementView.vue'),
+            meta: {
+              requiresAuth: true,
+              roles: ['ADMIN'],
+              navigation: { section: 'sidebar', label: '歌曲管理', order: 20 },
+            },
+          },
+          {
             path: '',
             name: 'library',
             component: () => import('../views/library/LibraryView.vue'),

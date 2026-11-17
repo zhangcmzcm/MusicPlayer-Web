@@ -5,7 +5,73 @@ import ElementPlus from 'element-plus'
 import App from '../App.vue'
 import { createAppRouter } from './index.js'
 import { useAuthStore } from '../stores/auth.js'
-import { authentication } from '../test/factories.js'
+import { authentication, trackPage } from '../test/factories.js'
+
+vi.mock('../api/tracks.js', () => ({
+  listTracks: vi.fn(async () => trackPage()),
+  listManagementTracks: vi.fn(async () => trackPage({ status: 'DRAFT' })),
+  getTrackCover: vi.fn(),
+}))
+
+it.each(['ADMIN', 'USER'])(
+  'should_mount_real_navigation_for_%s',
+  async (role) => {
+    const pinia = createPinia()
+    const auth = useAuthStore(pinia)
+    auth.session = authentication(role)
+    const router = createAppRouter(auth)
+    await router.push('/')
+    const wrapper = mount(App, {
+      attachTo: document.body,
+      global: { plugins: [pinia, router, ElementPlus] },
+    })
+    await vi.waitFor(() => expect(wrapper.find('h1').text()).toBe('曲库'))
+    expect(wrapper.find('a[href="/admin/tracks"]').exists()).toBe(
+      role === 'ADMIN',
+    )
+    if (role === 'ADMIN') {
+      await wrapper.get('button[aria-label="打开侧边导航"]').trigger('click')
+      await flushPromises()
+      document.querySelector('nav[aria-label="手机侧边导航"] a').click()
+      await vi.waitFor(() =>
+        expect(router.currentRoute.value.name).toBe('track-management'),
+      )
+      await vi.waitFor(() => expect(wrapper.find('h1').text()).toBe('歌曲管理'))
+      expect(
+        wrapper
+          .get('button[aria-label="打开侧边导航"]')
+          .attributes('aria-expanded'),
+      ).toBe('false')
+      await router.push('/')
+      await vi.waitFor(() => expect(wrapper.find('h1').text()).toBe('曲库'))
+    }
+  },
+)
+
+it.each(['ADMIN', 'USER', null])(
+  'should_resolve_initial_management_navigation_for_%s',
+  async (role) => {
+    const router = createAppRouter({
+      isAuthenticated: Boolean(role),
+      session: role ? authentication(role) : null,
+      clearSession: vi.fn(),
+    })
+    await router.push('/admin/tracks?status=DRAFT')
+    expect(router.currentRoute.value.name).toBe(
+      role === 'ADMIN' ? 'track-management' : role ? 'library' : 'login',
+    )
+    if (!role)
+      expect(router.currentRoute.value.query.redirect).toBe(
+        '/admin/tracks?status=DRAFT',
+      )
+    if (role === 'ADMIN')
+      expect(router.currentRoute.value.meta).toMatchObject({
+        requiresAuth: true,
+        roles: ['ADMIN'],
+        navigation: { section: 'sidebar', label: '歌曲管理', order: 20 },
+      })
+  },
+)
 
 it.each(['USER', 'ADMIN'])(
   'should_open_library_for_authenticated_%s',

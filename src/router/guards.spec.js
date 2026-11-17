@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { createMemoryHistory, createRouter } from 'vue-router'
+import { createMemoryHistory, createRouter, START_LOCATION } from 'vue-router'
 import { createAuthGuard } from './guards.js'
 import { resolveSafeRedirect } from '../utils/redirect.js'
 import { authentication } from '../test/factories.js'
@@ -15,6 +15,25 @@ const router = createRouter({
   ],
 })
 describe('safe navigation', () => {
+  it.each([START_LOCATION, { name: 'login', matched: [{}] }])(
+    'should_recover_wrong_role_to_library_from_%j',
+    (from) => {
+      vi.spyOn(ElMessage, 'error').mockImplementation(() => {})
+      const guard = createAuthGuard({
+        isAuthenticated: true,
+        session: authentication('USER'),
+      })
+      expect(
+        guard({ meta: { requiresAuth: true, roles: ['ADMIN'] } }, from),
+      ).toEqual({ name: 'library' })
+      expect(
+        guard(
+          { meta: { requiresAuth: true, roles: ['ADMIN'] } },
+          { name: 'library', matched: [{}] },
+        ),
+      ).toBe(false)
+    },
+  )
   it.each([
     'https://evil.test',
     '//evil.test',

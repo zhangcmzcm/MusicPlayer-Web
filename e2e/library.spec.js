@@ -69,6 +69,7 @@ test('should_browse_search_sort_paginate_and_restore_history', async ({
   await fillPassword(page)
   await page.getByRole('button', { name: '登录', exact: true }).click()
   await expect(heading(page)).toBeVisible()
+  await expect(page.getByRole('link', { name: '歌曲管理' })).toHaveCount(0)
   await expect(page.getByText('风经过的地方', { exact: true })).toBeVisible()
   await search(page).fill(' 林间 ')
   await search(page).press('Enter')
@@ -133,7 +134,7 @@ test('should_preserve_long_ids_nullable_metadata_and_authenticated_covers', asyn
     .toBe(1)
   expect(covers).toEqual([`/api/v1/tracks/${id}/cover`])
   await expect(page.getByText(`共 ${id} 首`).first()).toBeVisible()
-  await expect(page.getByRole('link', { name: '歌曲管理' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: '歌曲管理' })).toBeVisible()
   await expect(page.getByRole('link', { name: '收藏' })).toHaveCount(0)
 })
 
