@@ -65,8 +65,8 @@
 
 **接口**产出统一接口中的管理查询、状态文案和 listManagementTracks，消费既有 parseLibraryQuery、toLibraryQuery、validateTrackSearch、HTTP、Long 私有解析及测试 factories。
 
-- [ ] 核对 node --version、npm --version 与现有 API／查询测试可运行，依赖缺失时先 npm ci 恢复。环境阻断与新增功能红测分别记录。
-- [ ] 在 tracks.spec 导入新 API、管理默认查询及现有 trackPage，再写全部状态红测，使用现有 respond 与 trackPageText。
+- [x] 核对 node --version、npm --version 与现有 API／查询测试可运行，依赖缺失时先 npm ci 恢复。环境阻断与新增功能红测分别记录。
+- [x] 在 tracks.spec 导入新 API、管理默认查询及现有 trackPage，再写全部状态红测，使用现有 respond 与 trackPageText。
 
 ```js
 it('should_request_all_management_states_without_status', async () => {
@@ -88,17 +88,17 @@ it('should_request_all_management_states_without_status', async () => {
 })
 ```
 
-- [ ] 在 trackList.spec 写 `should_parse_and_serialize_management_status`，断言默认等于 DEFAULT_MANAGEMENT_QUERY，`{ status: 'DRAFT', q: ' 林间 ', page: '01' }` 往返保留 q 原值和 DRAFT，并将页码消费为 1。
-- [ ] 执行 `npm run test:unit -- src/api/tracks.spec.js src/utils/trackList.spec.js src/utils/errors.spec.js`，预期新增导出缺失或断言失败，记录实际红测。
-- [ ] 在 trackList.js 实现默认查询、三个状态选项、formatTrackStatus、parseManagementQuery 与 toManagementQuery。管理解析先复用原四字段规则，再消费 status。管理失败统一映射为“歌曲管理查询条件无效，请恢复默认条件。”。
-- [ ] 在 trackList.spec 写状态标签参数化断言，三个状态返回对应中文，null、undefined 与未知值返回“未知状态”。
-- [ ] 在 errors.spec 为 INVALID_MANAGEMENT_QUERY 写独立的精确文案断言，期望“歌曲管理查询条件无效，请恢复默认条件。”。
-- [ ] 在 tracks.js 提取模块内私有 `fetchTrackPage(query, selectedStatus, { signal } = {})`，复用现有请求与转换链。listTracks 固定传 PUBLISHED，listManagementTracks 传管理 status。normalizeTrack 按三个合法状态与 selectedStatus 校验，selectedStatus 缺省接受三态。
-- [ ] 增加 `should_keep_library_scope_published_when_query_contains_status`，传入额外 DRAFT 仍断言普通曲库请求 PUBLISHED。参数化管理三态请求、单状态响应越界、未知／null／缺失状态，全部查询接受三态混合页。
-- [ ] 增加 `should_reject_invalid_management_status`，覆盖数组、null、空字符串、ALL、未知值与小写。复用并保留原曲库忽略 status 的断言，管理查询补 100／101 个补充平面字符、Unicode 空白、重复词、5／6 词、正号与前导零、100×100 及 101×100 边界。
-- [ ] 管理 API 增加最大 Long ID、等价整数表示、合法 null、展示缺失降级、未知字段、合法空页及二进制封面相关回归。保留所有已有 API 断言。
-- [ ] 复跑本任务三份 spec，确认全部通过，执行 lint 与本任务文件格式检查。
-- [ ] 提交本任务相关文件，提交信息为“feat: 接入管理员歌曲列表查询”。
+- [x] 在 trackList.spec 写 `should_parse_and_serialize_management_status`，断言默认等于 DEFAULT_MANAGEMENT_QUERY，`{ status: 'DRAFT', q: ' 林间 ', page: '01' }` 往返保留 q 原值和 DRAFT，并将页码消费为 1。
+- [x] 执行 `npm run test:unit -- src/api/tracks.spec.js src/utils/trackList.spec.js src/utils/errors.spec.js`，预期新增导出缺失或断言失败，记录实际红测。
+- [x] 在 trackList.js 实现默认查询、三个状态选项、formatTrackStatus、parseManagementQuery 与 toManagementQuery。管理解析先复用原四字段规则，再消费 status。管理失败统一映射为“歌曲管理查询条件无效，请恢复默认条件。”。
+- [x] 在 trackList.spec 写状态标签参数化断言，三个状态返回对应中文，null、undefined 与未知值返回“未知状态”。
+- [x] 在 errors.spec 为 INVALID_MANAGEMENT_QUERY 写独立的精确文案断言，期望“歌曲管理查询条件无效，请恢复默认条件。”。
+- [x] 在 tracks.js 提取模块内私有 `fetchTrackPage(query, selectedStatus, { signal } = {})`，复用现有请求与转换链。listTracks 固定传 PUBLISHED，listManagementTracks 传管理 status。normalizeTrack 按三个合法状态与 selectedStatus 校验，selectedStatus 缺省接受三态。
+- [x] 增加 `should_keep_library_scope_published_when_query_contains_status`，传入额外 DRAFT 仍断言普通曲库请求 PUBLISHED。参数化管理三态请求、单状态响应越界、未知／null／缺失状态，全部查询接受三态混合页。
+- [x] 增加 `should_reject_invalid_management_status`，覆盖数组、null、空字符串、ALL、未知值与小写。复用并保留原曲库忽略 status 的断言，管理查询补 100／101 个补充平面字符、Unicode 空白、重复词、5／6 词、正号与前导零、100×100 及 101×100 边界。
+- [x] 管理 API 增加最大 Long ID、等价整数表示、合法 null、展示缺失降级、未知字段、合法空页及二进制封面相关回归。保留所有已有 API 断言。
+- [x] 复跑本任务三份 spec，确认全部通过，执行 lint 与本任务文件格式检查。
+- [x] 提交本任务相关文件，提交信息为“feat: 接入管理员歌曲列表查询”。
 
 ## 任务 2 复用列表生命周期与管理状态切换
 
@@ -106,14 +106,14 @@ it('should_request_all_management_states_without_status', async () => {
 
 **接口**消费任务 1 的 ManagementQuery／listManagementTracks 模型，产出带可选 fetchPage 的 useTrackList。测试辅助 `createFlow(initial = { ...DEFAULT_LIBRARY_QUERY }, options)` 将 options 传入 useTrackList。
 
-- [ ] 写 `should_use_injected_management_loader`，为当前 ADMIN 会话提供 spy fetchPage，断言收到管理查询和 AbortSignal，返回 DRAFT 页后 page 正确，默认 listTracks spy 调用数为 0。
-- [ ] 执行 `npm run test:unit -- src/composables/useTrackList.spec.js` 观察注入断言失败。
-- [ ] 实现可选第二参数并用 fetchPage 执行请求，复用当前请求序号、取消信号、会话对象／revision、500ms 冷却时钟与作用域清理。
-- [ ] 写 `should_ignore_late_management_status_result`，构造 DRAFT 请求晚于 ARCHIVED 完成，断言旧信号已取消，最终页属于 ARCHIVED。反向完成顺序时旧请求结束仍保留新请求的 pending。
-- [ ] 写 `should_keep_management_status_when_clearing_limited_search`，429 Retry-After=2 后切状态且 q 非空时请求数不增加，清空 q 后请求携带当前 status，2 秒到期后等待手动操作。
-- [ ] 增加同 Token 新会话、换会话、queryRef=null、卸载及重复刷新的管理注入场景，断言旧结果失效、资源释放与真实错误反馈。同 Token 新会话用例 mock 认证 API 后经 auth store 的 authenticate 建立会话，业务认证请求保持 mock。
-- [ ] 运行 composable 全部用例及原 API／TrackCover／HTTP／main 关联回归，确认当前默认调用与管理注入均通过。
-- [ ] 提交“feat: 支持管理列表读取与会话保护”。
+- [x] 写 `should_use_injected_management_loader`，为当前 ADMIN 会话提供 spy fetchPage，断言收到管理查询和 AbortSignal，返回 DRAFT 页后 page 正确，默认 listTracks spy 调用数为 0。
+- [x] 执行 `npm run test:unit -- src/composables/useTrackList.spec.js` 观察注入断言失败。
+- [x] 实现可选第二参数并用 fetchPage 执行请求，复用当前请求序号、取消信号、会话对象／revision、500ms 冷却时钟与作用域清理。
+- [x] 写 `should_ignore_late_management_status_result`，构造 DRAFT 请求晚于 ARCHIVED 完成，断言旧信号已取消，最终页属于 ARCHIVED。反向完成顺序时旧请求结束仍保留新请求的 pending。
+- [x] 写 `should_keep_management_status_when_clearing_limited_search`，429 Retry-After=2 后切状态且 q 非空时请求数不增加，清空 q 后请求携带当前 status，2 秒到期后等待手动操作。
+- [x] 增加同 Token 新会话、换会话、queryRef=null、卸载及重复刷新的管理注入场景，断言旧结果失效、资源释放与真实错误反馈。同 Token 新会话用例 mock 认证 API 后经 auth store 的 authenticate 建立会话，业务认证请求保持 mock。
+- [x] 运行 composable 全部用例及原 API／TrackCover／HTTP／main 关联回归，确认当前默认调用与管理注入均通过。
+- [x] 提交“feat: 支持管理列表读取与会话保护”。
 
 ## 任务 3 组合管理页面与状态展示
 
@@ -121,7 +121,7 @@ it('should_request_all_management_states_without_status', async () => {
 
 **接口**页面消费 parseManagementQuery、toManagementQuery、DEFAULT_MANAGEMENT_QUERY、TRACK_STATUS_OPTIONS，调用 `useTrackList(queryRef, { fetchPage: listManagementTracks })`。状态筛选使用 Element Plus，搜索、排序、页大小使用现有 LibraryToolbar，歌曲与分页使用扩展 TrackTable。
 
-- [ ] 在 TrackTable.spec 写状态红测，复用现有 table helper。
+- [x] 在 TrackTable.spec 写状态红测，复用现有 table helper。
 
 ```js
 it('should_show_management_status_when_requested', async () => {
@@ -134,15 +134,15 @@ it('should_show_management_status_when_requested', async () => {
 })
 ```
 
-- [ ] 新页面 spec 写 `should_submit_status_and_reset_page`，初始 `/admin/tracks?page=2`，选择“已归档”后断言路由查询为 `{ status: 'ARCHIVED' }`，传入 composable 的查询 page=0、status=ARCHIVED。
-- [ ] 执行新增页面与 TrackTable spec，记录缺失组件或状态断言的实际红测。
-- [ ] 实现 TrackTable 的 showStatus／emptyText。宽屏增加状态列，紧凑模式将状态放歌曲信息单元格，保留完整文本。全部无歌曲为“暂无歌曲”，单状态为“当前状态暂无歌曲”，搜索无结果与合法空页沿用已有优先级。
-- [ ] 将表格紧凑信息断点设为 1100px，手机细节仍按现有 720px 样式，验证新增侧栏后的中等宽度。状态展示由 showStatus 控制，使用有明确文字的浅绿／墨绿语义样式。
-- [ ] 实现管理页标题、统计、状态选择与现有查询组件。状态使用 aria-label 为“歌曲状态”的 Element Plus RadioGroup，change 事件将本地 ALL 转换为 status 缺省。已提交 q 非空且冷却大于 0 时禁用状态选择，搜索草稿仍可编辑和清空。状态、关键词、排序与页大小变化回第 1 页，五个字段共同判断相同查询刷新。
-- [ ] 实现路由参数恢复、查询错误与导航失败反馈。当前会话满足 ADMIN 时给 composable 有效 queryRef，角色变化时传 null 并隐藏管理资料。角色拒绝或 API 403 时显示安全反馈与真实曲库入口。
-- [ ] 页面测试创建真实 #business-search 目标并 attachTo document.body，清理目标，采用真实 Teleport。断言初始标题焦点、异步结果后焦点、三态标签、URL 往返、清空保留状态、非法查询恢复、403、换角色与导航抛错。
-- [ ] 表格测试覆盖 showStatus=false 的既有列、三个状态标签、紧凑状态与时长、空文案、搜索和空页优先级。总数为 0 时使用全部／单状态／搜索空文案，page>0 且仍有匹配歌曲的空页提供专用回到第一页，均保留请求页和统计。原分页／资源／长文本断言纳入回归。
-- [ ] 执行 `npm run test:unit -- src/views/management/TrackManagementView.spec.js src/components/library/TrackTable.spec.js src/components/library/LibraryToolbar.spec.js src/views/library/LibraryView.spec.js`，通过后提交“feat: 实现管理员歌曲列表与状态筛选”。
+- [x] 新页面 spec 写 `should_submit_status_and_reset_page`，初始 `/admin/tracks?page=2`，选择“已归档”后断言路由查询为 `{ status: 'ARCHIVED' }`，传入 composable 的查询 page=0、status=ARCHIVED。
+- [x] 执行新增页面与 TrackTable spec，记录缺失组件或状态断言的实际红测。
+- [x] 实现 TrackTable 的 showStatus／emptyText。宽屏增加状态列，紧凑模式将状态放歌曲信息单元格，保留完整文本。全部无歌曲为“暂无歌曲”，单状态为“当前状态暂无歌曲”，搜索无结果与合法空页沿用已有优先级。
+- [x] 将表格紧凑信息断点设为 1100px，手机细节仍按现有 720px 样式，验证新增侧栏后的中等宽度。状态展示由 showStatus 控制，使用有明确文字的浅绿／墨绿语义样式。
+- [x] 实现管理页标题、统计、状态选择与现有查询组件。状态使用 aria-label 为“歌曲状态”的 Element Plus RadioGroup，change 事件将本地 ALL 转换为 status 缺省。已提交 q 非空且冷却大于 0 时禁用状态选择，搜索草稿仍可编辑和清空。状态、关键词、排序与页大小变化回第 1 页，五个字段共同判断相同查询刷新。
+- [x] 实现路由参数恢复、查询错误与导航失败反馈。当前会话满足 ADMIN 时给 composable 有效 queryRef，角色变化时传 null 并隐藏管理资料。角色拒绝或 API 403 时显示安全反馈与真实曲库入口。
+- [x] 页面测试创建真实 #business-search 目标并 attachTo document.body，清理目标，采用真实 Teleport。断言初始标题焦点、异步结果后焦点、三态标签、URL 往返、清空保留状态、非法查询恢复、403、换角色与导航抛错。
+- [x] 表格测试覆盖 showStatus=false 的既有列、三个状态标签、紧凑状态与时长、空文案、搜索和空页优先级。总数为 0 时使用全部／单状态／搜索空文案，page>0 且仍有匹配歌曲的空页提供专用回到第一页，均保留请求页和统计。原分页／资源／长文本断言纳入回归。
+- [x] 执行 `npm run test:unit -- src/views/management/TrackManagementView.spec.js src/components/library/TrackTable.spec.js src/components/library/LibraryToolbar.spec.js src/views/library/LibraryView.spec.js`，通过后提交“feat: 实现管理员歌曲列表与状态筛选”。
 
 ## 任务 4 真实管理路由、侧栏和角色恢复
 
@@ -150,7 +150,7 @@ it('should_show_management_status_when_requested', async () => {
 
 **接口**真实路由 `/admin/tracks`，名称 track-management，组件懒加载，以子路径 `admin/tracks` 接入 BusinessLayout 的 children。meta 显式声明 requiresAuth=true、roles=['ADMIN']、navigation={section:'sidebar',label:'歌曲管理',order:20}。角色守卫接受 `(to, from)`，普通拒绝返回 false，首次导航或来源为 login 的角色拒绝返回 `{ name: 'library' }`。
 
-- [ ] 在 guards.spec 写首次导航红测，复用 authentication，使用 Vue Router 的 START_LOCATION。
+- [x] 在 guards.spec 写首次导航红测，复用 authentication，使用 Vue Router 的 START_LOCATION。
 
 ```js
 it('should_recover_initial_wrong_role_to_library', () => {
@@ -165,14 +165,14 @@ it('should_recover_initial_wrong_role_to_library', () => {
 })
 ```
 
-- [ ] 在真实 router spec 增加 ADMIN 进入管理、USER 初次直达恢复曲库、匿名带 redirect 进入登录的断言。执行 router 两份 spec，记录路由缺失及旧拒绝行为的红测。
-- [ ] 在 BusinessLayout 的受保护 children 中接入真实管理路由，导航元信息放在可实际进入的管理路由记录上，使用现有布局生成侧栏与手机抽屉。
-- [ ] 扩展角色守卫来源判断，from.matched 为空或 from.name 为 login 时使用曲库落点。已有有效业务来源保持取消导航及无权限提示，原直接调用 guard(to) 的拒绝语义有回归覆盖。
-- [ ] LoginView.spec 加入管理目标及真实 createAuthGuard，测试 ADMIN 登录回跳到管理，USER 登录回跳进入曲库并保留会话。原安全 redirect、普通守卫拒绝、抛错恢复与认证方式断言完整运行。
-- [ ] 真实路由测试挂载业务框架，mock 列表读取，断言 ADMIN 管理链接可见、USER 隐藏、手机抽屉导航后关闭，普通曲库入口仍真实可用。
-- [ ] 将已有 library e2e 的 ADMIN 管理链接数量 0 断言改为可见，补 USER 隐藏断言。保留原 Long、封面、null 与请求参数断言。
-- [ ] 执行路由、LoginView、useLogin、BusinessLayout、LibraryView、main 的定向单测与原 library／login e2e，确认导航和认证关联回归通过。
-- [ ] 提交“feat: 接入管理员侧栏与权限恢复”。
+- [x] 在真实 router spec 增加 ADMIN 进入管理、USER 初次直达恢复曲库、匿名带 redirect 进入登录的断言。执行 router 两份 spec，记录路由缺失及旧拒绝行为的红测。
+- [x] 在 BusinessLayout 的受保护 children 中接入真实管理路由，导航元信息放在可实际进入的管理路由记录上，使用现有布局生成侧栏与手机抽屉。
+- [x] 扩展角色守卫来源判断，from.matched 为空或 from.name 为 login 时使用曲库落点。已有有效业务来源保持取消导航及无权限提示，原直接调用 guard(to) 的拒绝语义有回归覆盖。
+- [x] LoginView.spec 加入管理目标及真实 createAuthGuard，测试 ADMIN 登录回跳到管理，USER 登录回跳进入曲库并保留会话。原安全 redirect、普通守卫拒绝、抛错恢复与认证方式断言完整运行。
+- [x] 真实路由测试挂载业务框架，mock 列表读取，断言 ADMIN 管理链接可见、USER 隐藏、手机抽屉导航后关闭，普通曲库入口仍真实可用。
+- [x] 将已有 library e2e 的 ADMIN 管理链接数量 0 断言改为可见，补 USER 隐藏断言。保留原 Long、封面、null 与请求参数断言。
+- [x] 执行路由、LoginView、useLogin、BusinessLayout、LibraryView、main 的定向单测与原 library／login e2e，确认导航和认证关联回归通过。
+- [x] 提交“feat: 接入管理员侧栏与权限恢复”。
 
 ## 任务 5 主流程、完整验证和审核材料
 
@@ -180,17 +180,17 @@ it('should_recover_initial_wrong_role_to_library', () => {
 
 **接口**浏览器使用真实页面和既有 mockApi。管理用例固定 `defaultLibraryPage: false`，handler 按 method／path／查询明确响应业务请求，使用现有 trackPage／trackPageText 生成原始 Long 数字。
 
-- [ ] 写管理主流程，mock 认证先返回角色选择再返回 ADMIN，完成登录→曲库→歌曲管理→全部→单状态→搜索→排序→翻页→刷新／历史。断言全部请求省略 status、单态严格传值、q 保留首尾空白、Bearer 头与可见数据一致。
-- [ ] 写 `should_render_published_management_results_from_explicit_mock`，在管理页选择 PUBLISHED、page=0、size=20、createdAt,desc、空 q 时提供明确非空页，断言已发布歌曲可见及 handler 确实收到请求。
-- [ ] 写权限浏览器用例，覆盖 USER 直达、ADMIN 选择 USER 身份后的回跳、API 403 及返回曲库。显式响应曲库 PUBLISHED 请求，断言角色拒绝后管理资料和管理范围读取均未出现。
-- [ ] 补合法 null、最大 Long ID 的鉴权封面及精确统计、合法空页、429 保留状态清空、网络／503 重试、当前与旧会话 401。旧响应到达拦截器的保护同时引用现有 HTTP adapter 回归。
-- [ ] 在 1366×768、1440×900、1920×1080、320×740、390×844 检查管理列表和真实侧栏，增加 1024px 下 ADMIN 管理页与普通曲库带侧栏的检查。断言状态、时长、长文本、搜索错误与分页可达，文档／主区／表格内部无横向溢出，人工查看代表截图。
-- [ ] 执行 `npm run test:e2e -- e2e/track-management.spec.js`，修复确认成立的问题并重跑，记录每次实际失败与最终结果。
-- [ ] 核对浏览器环境，缺失时执行 `npx playwright install chromium`，测试运行器未启动用例记为未执行／环境阻断。
-- [ ] 顺序执行 `npm ci`、`npm run check`、`npm run test:unit:coverage -- --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=html`、`npm run test:e2e`，记录各命令真实退出状态、通过／失败／跳过／todo／重试与 flaky。浏览器缺失时执行 `npx playwright install chromium` 并重新验证。
-- [ ] 从 json-summary 逐文件核对 tracks.js、trackList.js、errors.js、useTrackList.js、TrackTable.vue、TrackManagementView.vue、guards.js 的完整文件覆盖率，router/index.js 的声明与零分支适用性单列，保留真实路由证据。
-- [ ] 完成功能文档，包含边界、接口引用、角色矩阵、字段缺失／null／边界／非法类型、请求与响应判断依据、状态恢复、真实测试结果、逐文件覆盖率、视觉检查、真实后端与其他浏览器的验证状态及完整变更清单。
-- [ ] 检查三个文档状态及直接链接，逐文件核对工作区归属，提交“docs: 补齐管理员歌曲列表验证材料”。
+- [x] 写管理主流程，mock 认证先返回角色选择再返回 ADMIN，完成登录→曲库→歌曲管理→全部→单状态→搜索→排序→翻页→刷新／历史。断言全部请求省略 status、单态严格传值、q 保留首尾空白、Bearer 头与可见数据一致。
+- [x] 写 `should_render_published_management_results_from_explicit_mock`，在管理页选择 PUBLISHED、page=0、size=20、createdAt,desc、空 q 时提供明确非空页，断言已发布歌曲可见及 handler 确实收到请求。
+- [x] 写权限浏览器用例，覆盖 USER 直达、ADMIN 选择 USER 身份后的回跳、API 403 及返回曲库。显式响应曲库 PUBLISHED 请求，断言角色拒绝后管理资料和管理范围读取均未出现。
+- [x] 补合法 null、最大 Long ID 的鉴权封面及精确统计、合法空页、429 保留状态清空、网络／503 重试、当前与旧会话 401。旧响应到达拦截器的保护同时引用现有 HTTP adapter 回归。
+- [x] 在 1366×768、1440×900、1920×1080、320×740、390×844 检查管理列表和真实侧栏，增加 1024px 下 ADMIN 管理页与普通曲库带侧栏的检查。断言状态、时长、长文本、搜索错误与分页可达，文档／主区／表格内部无横向溢出，人工查看代表截图。
+- [x] 执行 `npm run test:e2e -- e2e/track-management.spec.js`，修复确认成立的问题并重跑，记录每次实际失败与最终结果。
+- [x] 核对浏览器环境，缺失时执行 `npx playwright install chromium`，测试运行器未启动用例记为未执行／环境阻断。
+- [x] 顺序执行 `npm ci`、`npm run check`、`npm run test:unit:coverage -- --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=html`、`npm run test:e2e`，记录各命令真实退出状态、通过／失败／跳过／todo／重试与 flaky。浏览器缺失时执行 `npx playwright install chromium` 并重新验证。
+- [x] 从 json-summary 逐文件核对 tracks.js、trackList.js、errors.js、useTrackList.js、TrackTable.vue、TrackManagementView.vue、guards.js 的完整文件覆盖率，router/index.js 的声明与零分支适用性单列，保留真实路由证据。
+- [x] 完成功能文档，包含边界、接口引用、角色矩阵、字段缺失／null／边界／非法类型、请求与响应判断依据、状态恢复、真实测试结果、逐文件覆盖率、视觉检查、真实后端与其他浏览器的验证状态及完整变更清单。
+- [x] 检查三个文档状态及直接链接，逐文件核对工作区归属，提交“docs: 补齐管理员歌曲列表验证材料”。
 - [ ] 按 AGENTS.md 提交完整切片审核，记录基线、实际提交区间、运行器版本与模型、轮次及验证前后 Git 状态。审核命令的运行能力沿已有授权配置，开始检查实现正确性即计实质轮次，同任务最多三轮。
 - [ ] 按稳定问题编号复核事实、分级与方向，修复确认成立的阻断或举证请求复核，重新验证。accepted 后归档实际结论，等待人类指派下一切片。
 
@@ -199,5 +199,18 @@ it('should_recover_initial_wrong_role_to_library', () => {
 - 设计第 1—3 节对应任务 1、4、5，布局与查询对应任务 1、3、5，单元职责与字段消费对应任务 1、2、3，状态恢复与验证对应全部任务。
 - 五项 Review Focus 均有归属任务及具体验收断言，管理全部与单状态、普通曲库、首次角色拒绝、真实 mock 及侧栏尺寸均有明确回归。
 - 接口名称、status 缺省、回调签名、返回页模型、props 与事件在任务间一致。代码步骤给出决定与边界，方法体由实施者按测试完成。
-- 当前交付为计划文档，开发步骤均待执行。计划文件采用链接、格式、契约与范围检查，业务测试结果由实际实施记录。
-- 请人类审阅本计划并确认执行方式，推荐当前会话原生实现，因为各任务共享既有 API、查询和表格接口，适合连续完成后对完整切片做独立审核。
+- 2026-11-17 人类通过计划并指定当前会话主 Agent 实施。任务 1—4 已实现并定向验证，任务 5 的全量验证和送审材料已完成，正在进入独立审核。
+- 执行方式为当前会话主 Agent 编写业务代码，辅助 Agent 进行只读核对，完整切片交 Claude 独立审核。
+
+## 实际执行记录
+
+- 任务 1 红测为 35 失败／86 通过，补齐查询、API 与文案后 121 条通过。测试工厂的 undefined 默认回填通过移除原始 JSON 字段明确覆盖真实缺失。提交 5687656。
+- 任务 2 红测为 5 失败／11 通过，注入实现后 composable 16 条与关联回归合计 104 条通过。提交 971e56b。
+- 任务 3 红测为 5 失败／5 通过及缺失页面加载失败，接入后 27 条通过。焦点测试最初使用了不存在的标签，已按实际“搜索音乐”定位修正。提交 412b15d。
+- 任务 4 路由及角色恢复红测为 5 失败／18 通过，完成后关联单测 101 条与曲库／登录端到端 66 条通过。提交 bfb3488。
+- 任务 5 管理端到端初次 19 条通过。截图查看发现 1024px 紧凑表格序号换行，调整为 40px 单行并增加两位序号浏览器断言。
+- npm ci 沙箱运行出现“Exit handler never called”，沙箱外重试退出 0，安装 308 包、审计 309 包，npm 报告现有 6 个 moderate advisories。依赖与锁文件保持基线。
+- npm run check 退出 0，lint 零警告、格式通过、Vitest 546 通过／0 失败／0 跳过／0 todo、生产构建通过。Vite 延续全量组件引入的 500kB 体积提示。
+
+- 覆盖率命令退出 0，546 条通过，8 份源码逐文件口径均达标，router/index.js 无可执行分支。全量 npm run test:e2e 退出 0，112 通过，失败／跳过／重试／flaky／预期失败均 0。
+- 三份交付文档直接链接检查 24 个通过。采用主 Agent 实施，辅助 Agent 仅做只读核对，业务实现提交前后由主 Agent 自验。

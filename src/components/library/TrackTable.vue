@@ -120,7 +120,7 @@ function secondaryText(track) {
       <el-table-column
         type="index"
         :index="position"
-        :width="compact ? 28 : 48"
+        :width="compact ? 40 : 48"
         label="序号"
       />
       <el-table-column label="歌曲" :min-width="compact ? 165 : 240">
@@ -242,6 +242,11 @@ function secondaryText(track) {
 }
 .song-table :deep(.cell) {
   padding: 0 12px;
+}
+.song-table :deep(.el-table__cell:first-child .cell) {
+  padding: 0 3px;
+  font-size: 11px;
+  white-space: nowrap;
 }
 .song-table :deep(.el-table__inner-wrapper::before) {
   display: none;
