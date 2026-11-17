@@ -3,6 +3,7 @@ import { effectScope, nextTick, ref } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { flushPromises } from '@vue/test-utils'
 import { listTracks } from '../api/tracks.js'
+import { login } from '../api/auth.js'
 import { useAuthStore } from '../stores/auth.js'
 import { authentication, deferred, trackPage } from '../test/factories.js'
 import { ApiError } from '../utils/errors.js'
@@ -10,11 +11,12 @@ import { DEFAULT_LIBRARY_QUERY } from '../utils/trackList.js'
 import { useTrackList } from './useTrackList.js'
 
 vi.mock('../api/tracks.js', () => ({ listTracks: vi.fn() }))
+vi.mock('../api/auth.js', () => ({ login: vi.fn() }))
 let scope
-function createFlow(initial = { ...DEFAULT_LIBRARY_QUERY }) {
+function createFlow(initial = { ...DEFAULT_LIBRARY_QUERY }, options) {
   const query = ref(initial)
   scope = effectScope()
-  const flow = scope.run(() => useTrackList(query))
+  const flow = scope.run(() => useTrackList(query, options))
   return { query, flow }
 }
 beforeEach(() => {
@@ -25,6 +27,111 @@ beforeEach(() => {
 afterEach(() => scope?.stop())
 
 describe('track list lifecycle', () => {
+  it('should_use_injected_management_loader', async () => {
+    useAuthStore().session = authentication('ADMIN')
+    const fetchPage = vi.fn().mockResolvedValue(trackPage({ status: 'DRAFT' }))
+    const query = { ...DEFAULT_LIBRARY_QUERY, status: 'DRAFT' }
+    const { flow } = createFlow(query, { fetchPage })
+    await flushPromises()
+    expect(fetchPage).toHaveBeenCalledWith(query, {
+      signal: expect.any(AbortSignal),
+    })
+    expect(flow.page.value.items[0].status).toBe('DRAFT')
+    expect(listTracks).not.toHaveBeenCalled()
+  })
+  it.each([true, false])(
+    'should_ignore_late_management_status_result_%s',
+    async (oldLast) => {
+      const first = deferred(),
+        second = deferred()
+      const fetchPage = vi
+        .fn()
+        .mockReturnValueOnce(first.promise)
+        .mockReturnValueOnce(second.promise)
+      const { query, flow } = createFlow(
+        { ...DEFAULT_LIBRARY_QUERY, status: 'DRAFT' },
+        { fetchPage },
+      )
+      const signal = fetchPage.mock.calls[0][1].signal
+      query.value = { ...query.value, status: 'ARCHIVED' }
+      await nextTick()
+      expect(signal.aborted).toBe(true)
+      if (oldLast) {
+        second.resolve(trackPage({ status: 'ARCHIVED' }))
+        await flushPromises()
+      }
+      first.resolve(trackPage({ status: 'DRAFT' }))
+      await flushPromises()
+      if (!oldLast) {
+        expect(flow.pending.value).toBe(true)
+        second.resolve(trackPage({ status: 'ARCHIVED' }))
+        await flushPromises()
+      }
+      expect(flow.page.value.items[0].status).toBe('ARCHIVED')
+    },
+  )
+  it('should_keep_management_status_when_clearing_limited_search', async () => {
+    vi.useFakeTimers()
+    const fetchPage = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new ApiError({
+          status: 429,
+          code: 'TRACK_SEARCH_RATE_LIMITED',
+          retryAfter: 2,
+        }),
+      )
+      .mockResolvedValue(trackPage({ status: 'ARCHIVED' }))
+    const { query, flow } = createFlow(
+      { ...DEFAULT_LIBRARY_QUERY, q: '林间', status: 'DRAFT' },
+      { fetchPage },
+    )
+    await flushPromises()
+    query.value = { ...query.value, status: 'ARCHIVED' }
+    await nextTick()
+    expect(fetchPage).toHaveBeenCalledTimes(1)
+    query.value = { ...query.value, q: '' }
+    await flushPromises()
+    expect(fetchPage).toHaveBeenLastCalledWith(
+      { ...DEFAULT_LIBRARY_QUERY, status: 'ARCHIVED' },
+      expect.any(Object),
+    )
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(flow.retryRemaining.value).toBe(0)
+    expect(fetchPage).toHaveBeenCalledTimes(2)
+  })
+  it('should_invalidate_same_token_management_session_and_dispose_requests', async () => {
+    const auth = useAuthStore()
+    const session = authentication('ADMIN')
+    auth.session = session
+    const first = deferred(),
+      second = deferred()
+    const fetchPage = vi
+      .fn()
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise)
+    const { query, flow } = createFlow(DEFAULT_LIBRARY_QUERY, { fetchPage })
+    flow.retry()
+    expect(fetchPage).toHaveBeenCalledTimes(1)
+    login.mockResolvedValue({
+      status: 'AUTHENTICATED',
+      authentication: { ...session },
+    })
+    await auth.authenticate({ loginType: 'EMAIL_PASSWORD' })
+    await nextTick()
+    expect(fetchPage).toHaveBeenCalledTimes(2)
+    first.reject(new ApiError({ status: 401 }))
+    await flushPromises()
+    expect(flow.pending.value).toBe(true)
+    expect(flow.error.value).toBeNull()
+    query.value = null
+    await nextTick()
+    expect(fetchPage.mock.calls[1][1].signal.aborted).toBe(true)
+    second.resolve(trackPage())
+    await flushPromises()
+    expect(flow.page.value).toBeNull()
+    scope.stop()
+  })
   it('should_load_the_current_query_and_expose_pending', async () => {
     const gate = deferred()
     listTracks.mockReturnValue(gate.promise)

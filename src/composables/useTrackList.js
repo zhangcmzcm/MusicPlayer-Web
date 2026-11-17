@@ -3,7 +3,7 @@ import { listTracks } from '../api/tracks.js'
 import { useAuthStore } from '../stores/auth.js'
 import { ApiError } from '../utils/errors.js'
 
-export function useTrackList(queryRef) {
+export function useTrackList(queryRef, { fetchPage = listTracks } = {}) {
   const auth = useAuthStore()
   const page = ref(null)
   const pending = ref(false)
@@ -51,7 +51,7 @@ export function useTrackList(queryRef) {
       auth.getSessionRevision() === revision
     pending.value = true
     try {
-      const result = await listTracks(query, { signal: request.signal })
+      const result = await fetchPage(query, { signal: request.signal })
       if (isCurrent()) page.value = result
     } catch (failure) {
       if (!isCurrent() || failure.code === 'CANCELLED') return
