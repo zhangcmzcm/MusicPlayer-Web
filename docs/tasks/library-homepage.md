@@ -35,6 +35,8 @@ LIB-01 已形成[曲库主页实施计划](../superpowers/plans/2026-11-15-libra
 
 AUTH-03 至 AUTH-06 复用已有账户任务编号。AUTH-07 的登录默认落点随 LIB-01 验收。AUTH-06 包含多段安全交互，进入实施规划前按现行协议完成切片拆分。[既有账户任务定义](login-follow-up.md)
 
+MGMT-01 至 MGMT-06 的页面组织、批量导入、草稿编辑与接口依赖已在 2026-11-16 形成[歌曲管理任务书](song-management.md)，首个独立切片见[管理员歌曲列表设计](../superpowers/specs/2026-11-16-song-management-list-design.md)。
+
 ## 已确认的产品决定
 
 以下决定来源于本次 brainstorming 对话，适用于本任务书。
