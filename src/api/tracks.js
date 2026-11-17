@@ -50,9 +50,13 @@ function displayText(value, fallback) {
   return typeof value === 'string' && value.length ? value : fallback
 }
 
-function normalizeTrack(item) {
+function normalizeTrack(item, selectedStatus) {
   const id = longString(item?.id, 1n)
-  if (item.status !== 'PUBLISHED') throw invalidResponse()
+  if (
+    !['DRAFT', 'PUBLISHED', 'ARCHIVED'].includes(item.status) ||
+    (selectedStatus !== undefined && item.status !== selectedStatus)
+  )
+    throw invalidResponse()
   const cover =
     item.cover && typeof item.cover === 'object' && !Array.isArray(item.cover)
       ? {
@@ -72,13 +76,13 @@ function normalizeTrack(item) {
   }
 }
 
-export async function listTracks(query, { signal } = {}) {
+async function fetchTrackPage(query, selectedStatus, { signal } = {}) {
   const params = {
     page: query.page,
     size: query.size,
     sort: query.sort,
-    status: 'PUBLISHED',
   }
+  if (selectedStatus !== undefined) params.status = selectedStatus
   if (query.q !== '') params.q = query.q
   const response = await http.get('/tracks', {
     params,
@@ -97,13 +101,21 @@ export async function listTracks(query, { signal } = {}) {
   const size = Number(longString(data.size, 1n, 100n))
   if (page !== query.page || size !== query.size) throw invalidResponse()
   return {
-    items: data.items.map(normalizeTrack),
+    items: data.items.map((item) => normalizeTrack(item, selectedStatus)),
     page,
     size,
     totalElements: longString(data.totalElements),
     totalPages: longString(data.totalPages),
     hasNext: data.hasNext,
   }
+}
+
+export function listTracks(query, options) {
+  return fetchTrackPage(query, 'PUBLISHED', options)
+}
+
+export function listManagementTracks(query, options) {
+  return fetchTrackPage(query, query.status, options)
 }
 
 function decodeCoverError(data, _headers, status) {

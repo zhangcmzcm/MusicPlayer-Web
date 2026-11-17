@@ -1,4 +1,5 @@
 export const errorMessages = {
+  INVALID_MANAGEMENT_QUERY: '歌曲管理查询条件无效，请恢复默认条件。',
   INVALID_LIBRARY_QUERY: '曲库查询条件无效，请恢复默认条件。',
   TRACK_STORE_UNAVAILABLE: '曲库暂时无法读取，请稍后重试。',
   TRACK_SEARCH_RATE_LIMITED: '搜索过于频繁，请稍后重试。',

@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { configureAuth, http } from './http.js'
-import { getTrackCover, listTracks } from './tracks.js'
-import { authentication, trackPageText } from '../test/factories.js'
+import { getTrackCover, listManagementTracks, listTracks } from './tracks.js'
+import { authentication, trackPage, trackPageText } from '../test/factories.js'
+import { DEFAULT_MANAGEMENT_QUERY } from '../utils/trackList.js'
 
 const query = { q: '', page: 0, size: 20, sort: 'createdAt,desc' }
 const originalAdapter = http.defaults.adapter
@@ -18,6 +19,128 @@ afterEach(() => {
 })
 
 describe('track list API', () => {
+  it('should_request_all_management_states_without_status', async () => {
+    let request
+    const items = ['DRAFT', 'PUBLISHED', 'ARCHIVED'].map(
+      (status, index) => trackPage({ id: String(index + 1), status }).items[0],
+    )
+    http.defaults.adapter = async (config) => {
+      request = config
+      return respond(trackPageText({ items, totalElements: '3' }), config)
+    }
+    const page = await listManagementTracks(DEFAULT_MANAGEMENT_QUERY)
+    expect(request.params).toEqual({
+      page: 0,
+      size: 20,
+      sort: 'createdAt,desc',
+    })
+    expect(page.items.map((item) => item.status)).toEqual([
+      'DRAFT',
+      'PUBLISHED',
+      'ARCHIVED',
+    ])
+  })
+  it.each(['DRAFT', 'PUBLISHED', 'ARCHIVED'])(
+    'should_request_single_management_status_%s',
+    async (status) => {
+      const controller = new AbortController()
+      http.defaults.adapter = async (config) => {
+        expect(config.params).toEqual({ ...query, q: ' 林间 ', status })
+        expect(config.signal).toBe(controller.signal)
+        expect(config.headers.get('Authorization')).toMatch(/^Bearer /)
+        return respond(
+          trackPageText({
+            status,
+            id: '9.223372036854775807e18',
+            albumName: null,
+            durationMs: null,
+            cover: null,
+            totalElements: '9223372036854775807',
+          }),
+          config,
+        )
+      }
+      const page = await listManagementTracks(
+        { ...query, q: ' 林间 ', status },
+        { signal: controller.signal },
+      )
+      expect(page.items[0]).toMatchObject({
+        id: '9223372036854775807',
+        status,
+        albumName: null,
+        durationMs: null,
+        cover: null,
+      })
+      expect(page.totalElements).toBe('9223372036854775807')
+    },
+  )
+  it.each([null, undefined, 'OTHER', 'draft'])(
+    'should_reject_invalid_management_response_status_%s',
+    async (status) => {
+      http.defaults.adapter = async (config) =>
+        respond(
+          status === undefined
+            ? trackPageText().replace(',"status":"PUBLISHED"', '')
+            : trackPageText({ status }),
+          config,
+        )
+      await expect(listManagementTracks(query)).rejects.toMatchObject({
+        code: 'INVALID_RESPONSE',
+      })
+    },
+  )
+  it('should_reject_management_response_outside_selected_scope', async () => {
+    http.defaults.adapter = async (config) =>
+      respond(trackPageText({ status: 'ARCHIVED' }), config)
+    await expect(
+      listManagementTracks({ ...query, status: 'DRAFT' }),
+    ).rejects.toMatchObject({ code: 'INVALID_RESPONSE' })
+  })
+  it('should_keep_library_scope_published_when_query_contains_status', async () => {
+    http.defaults.adapter = async (config) => {
+      expect(config.params.status).toBe('PUBLISHED')
+      return respond(trackPageText(), config)
+    }
+    expect(
+      (await listTracks({ ...query, status: 'DRAFT' })).items[0].status,
+    ).toBe('PUBLISHED')
+  })
+  it('should_accept_management_empty_pages_and_degrade_display_fields', async () => {
+    http.defaults.adapter = async (config) =>
+      respond(
+        trackPageText({
+          status: 'DRAFT',
+          title: null,
+          artistName: null,
+          albumName: null,
+          durationMs: null,
+          cover: null,
+          extra: true,
+        }),
+        config,
+      )
+    expect((await listManagementTracks(query)).items[0]).toMatchObject({
+      title: '未命名歌曲',
+      artistName: '未知艺术家',
+      albumName: null,
+      durationMs: null,
+      cover: null,
+    })
+    http.defaults.adapter = async (config) =>
+      respond(
+        trackPageText({
+          items: [],
+          page: 100,
+          size: 100,
+          totalElements: '0',
+          totalPages: '0',
+        }),
+        config,
+      )
+    expect(
+      (await listManagementTracks({ ...query, page: 100, size: 100 })).items,
+    ).toEqual([])
+  })
   it('should_preserve_long_ids_and_send_published_scope', async () => {
     let request
     http.defaults.adapter = async (config) => {

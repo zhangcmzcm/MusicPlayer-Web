@@ -3,6 +3,11 @@ import { ApiError, getErrorMessage } from './errors.js'
 import { reportError } from './logger.js'
 
 describe('safe errors', () => {
+  it('should_explain_invalid_management_query', () => {
+    expect(
+      getErrorMessage(new ApiError({ code: 'INVALID_MANAGEMENT_QUERY' })),
+    ).toBe('歌曲管理查询条件无效，请恢复默认条件。')
+  })
   it.each([400, 401, 403, 404, 409, 429, 500, 503])(
     'should_map_status_%s_to_safe_feedback',
     (status) => {

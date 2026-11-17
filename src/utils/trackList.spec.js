@@ -1,10 +1,86 @@
 import { describe, expect, it } from 'vitest'
 import {
+  DEFAULT_MANAGEMENT_QUERY,
+  formatTrackStatus,
   formatDuration,
+  parseManagementQuery,
   parseLibraryQuery,
+  toManagementQuery,
   toLibraryQuery,
   validateTrackSearch,
 } from './trackList.js'
+
+describe('management queries', () => {
+  it('should_parse_and_serialize_management_status', () => {
+    expect(parseManagementQuery({})).toEqual({
+      query: DEFAULT_MANAGEMENT_QUERY,
+      error: null,
+    })
+    const { query, error } = parseManagementQuery({
+      status: 'DRAFT',
+      q: ' 林间 ',
+      page: '01',
+    })
+    expect(error).toBeNull()
+    expect(query).toEqual({
+      ...DEFAULT_MANAGEMENT_QUERY,
+      status: 'DRAFT',
+      q: ' 林间 ',
+      page: 1,
+    })
+    expect(toManagementQuery(query)).toEqual({
+      status: 'DRAFT',
+      q: ' 林间 ',
+      page: '1',
+    })
+    expect(toManagementQuery(DEFAULT_MANAGEMENT_QUERY)).toEqual({})
+  })
+  it.each(['DRAFT', 'PUBLISHED', 'ARCHIVED'])(
+    'should_accept_management_status_%s',
+    (status) => {
+      const { query } = parseManagementQuery({ status })
+      expect(toManagementQuery(query)).toEqual({ status })
+    },
+  )
+  it.each([['DRAFT', 'ARCHIVED'], null, '', 'ALL', 'DELETED', 'draft'])(
+    'should_reject_invalid_management_status_%j',
+    (status) => {
+      expect(parseManagementQuery({ status })).toMatchObject({
+        query: null,
+        error: { code: 'INVALID_MANAGEMENT_QUERY' },
+      })
+    },
+  )
+  it.each([
+    { q: '😀'.repeat(100) },
+    { q: 'a\u3000a\u00a0a\ta\na' },
+    { page: '+100', size: '0100' },
+  ])('should_accept_management_boundaries_%j', (query) => {
+    expect(parseManagementQuery(query).error).toBeNull()
+  })
+  it.each([
+    { q: '😀'.repeat(101) },
+    { q: 'a a a a a a' },
+    { page: '101', size: '100' },
+    { q: null },
+    { sort: ['title,asc'] },
+  ])('should_recover_invalid_management_base_query_%j', (query) => {
+    expect(parseManagementQuery(query)).toMatchObject({
+      query: null,
+      error: { code: 'INVALID_MANAGEMENT_QUERY' },
+    })
+  })
+  it.each([
+    ['DRAFT', '草稿'],
+    ['PUBLISHED', '已发布'],
+    ['ARCHIVED', '已归档'],
+    [null, '未知状态'],
+    [undefined, '未知状态'],
+    ['OTHER', '未知状态'],
+  ])('should_format_status_%s', (value, label) => {
+    expect(formatTrackStatus(value)).toBe(label)
+  })
+})
 
 describe('library queries', () => {
   it.each([

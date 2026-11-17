@@ -7,6 +7,21 @@ export const DEFAULT_LIBRARY_QUERY = Object.freeze({
   sort: 'createdAt,desc',
 })
 
+export const DEFAULT_MANAGEMENT_QUERY = DEFAULT_LIBRARY_QUERY
+
+export const TRACK_STATUS_OPTIONS = [
+  { value: 'DRAFT', label: '草稿' },
+  { value: 'PUBLISHED', label: '已发布' },
+  { value: 'ARCHIVED', label: '已归档' },
+]
+
+export function formatTrackStatus(value) {
+  return (
+    TRACK_STATUS_OPTIONS.find((option) => option.value === value)?.label ||
+    '未知状态'
+  )
+}
+
 export const LIBRARY_SORT_OPTIONS = [
   { value: 'createdAt,desc', label: '最近加入' },
   { value: 'createdAt,asc', label: '最早加入' },
@@ -63,6 +78,30 @@ export function toLibraryQuery(query) {
   if (query.page !== 0) result.page = String(query.page)
   if (query.size !== 20) result.size = String(query.size)
   if (query.sort !== DEFAULT_LIBRARY_QUERY.sort) result.sort = query.sort
+  return result
+}
+
+export function parseManagementQuery(routeQuery) {
+  const parsed = parseLibraryQuery(routeQuery)
+  const status = routeQuery.status
+  if (
+    parsed.error ||
+    (status !== undefined &&
+      !TRACK_STATUS_OPTIONS.some((option) => option.value === status))
+  )
+    return {
+      query: null,
+      error: new ApiError({ code: 'INVALID_MANAGEMENT_QUERY' }),
+    }
+  const query = { ...parsed.query }
+  if (status !== undefined) query.status = status
+  return { query, error: null }
+}
+
+export function toManagementQuery(query) {
+  const result = toLibraryQuery(query)
+  if (TRACK_STATUS_OPTIONS.some((option) => option.value === query.status))
+    result.status = query.status
   return result
 }
 
