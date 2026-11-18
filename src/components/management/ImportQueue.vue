@@ -122,6 +122,7 @@ const summary = computed(() =>
           <el-progress
             v-if="item.state === 'sending' && item.progress !== null"
             :percentage="item.progress"
+            :aria-label="`${item.fileName} 发送进度`"
             :stroke-width="4"
           />
           <p

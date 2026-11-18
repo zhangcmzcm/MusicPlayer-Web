@@ -238,6 +238,12 @@ export const useTrackImportStore = defineStore('track-import', () => {
       } catch {
         return
       }
+      item.state = 'waiting'
+      item.error = null
+      error.value = null
+      updateBlocker()
+      batchState.value = 'paused'
+      return
     }
     batchState.value = 'paused'
     const retryOwner = owner

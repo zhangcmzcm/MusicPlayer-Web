@@ -114,7 +114,7 @@ it.each(['status', 'uploadId', 'track'])(
     )
   },
 )
-it.each([null, '42', 0, -1, 1.5, {}, []])(
+it.each([undefined, null, '42', 0, -1, 1.5, {}, []])(
   'should_reject_invalid_import_track_id_%j',
   async (id) => {
     const body = JSON.parse(importResponseText())
@@ -128,11 +128,22 @@ it.each([null, '42', 0, -1, 1.5, {}, []])(
 )
 it.each([
   { status: 'PROCESSING' },
+  { uploadId: null },
   { uploadId: '8f14e45f-ceea-467f-a1d7-1b0a4b8f8f6c' },
   { track: null },
 ])('should_reject_unconfirmed_result_%j', async (fields) => {
   http.defaults.adapter = async (config) =>
     respond(importResponseText(fields), config)
+  await expect(importTrack({ file: file(), uploadId })).rejects.toMatchObject({
+    code: 'INVALID_RESPONSE',
+  })
+})
+it('should_reject_raw_numeric_token_over_long_limit', async () => {
+  http.defaults.adapter = async (config) =>
+    respond(
+      importResponseText({ track: { id: '9223372036854775808' } }),
+      config,
+    )
   await expect(importTrack({ file: file(), uploadId })).rejects.toMatchObject({
     code: 'INVALID_RESPONSE',
   })

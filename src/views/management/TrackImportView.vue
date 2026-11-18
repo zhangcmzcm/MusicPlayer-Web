@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onScopeDispose, ref } from 'vue'
+import { computed, nextTick, onMounted, onScopeDispose, ref, watch } from 'vue'
 import {
   isNavigationFailure,
   NavigationFailureType,
@@ -24,6 +24,13 @@ const heading = ref(),
   navigationError = ref(null)
 let disposed = false
 onMounted(() => heading.value?.focus({ preventScroll: true }))
+watch(
+  () => route.fullPath,
+  async () => {
+    await nextTick()
+    if (!disposed) heading.value?.focus({ preventScroll: true })
+  },
+)
 onScopeDispose(() => {
   disposed = true
 })

@@ -117,6 +117,9 @@ it('should_disable_duplicate_actions_while_running_or_pausing_and_show_transfer_
   expect(wrapper.get('[role=progressbar]').attributes('aria-valuenow')).toBe(
     '52',
   )
+  expect(wrapper.get('[role=progressbar]').attributes('aria-label')).toBe(
+    'track-0.mp3 发送进度',
+  )
   await wrapper.get('[aria-label="完成当前项后暂停"]').trigger('click')
   expect(wrapper.emitted('pause-requested')).toHaveLength(1)
   await wrapper.setProps({ batchState: 'pausing' })

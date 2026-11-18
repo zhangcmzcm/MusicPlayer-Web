@@ -4,12 +4,7 @@ import { useAuthStore } from './auth.js'
 import { useTrackImportStore } from './trackImport.js'
 import { importTrack } from '../api/trackImports.js'
 import { login } from '../api/auth.js'
-import {
-  authenticated,
-  authentication,
-  deferred,
-  importResult,
-} from '../test/factories.js'
+import { authentication, deferred, importResult } from '../test/factories.js'
 import { ApiError } from '../utils/errors.js'
 
 vi.mock('../api/trackImports.js', () => ({ importTrack: vi.fn() }))
@@ -225,8 +220,28 @@ it('should_block_uuid_failure_then_retry_with_a_new_key_without_losing_file', as
   await store.start()
   expect(importTrack).not.toHaveBeenCalled()
   await store.retryCurrent()
+  expect(store.items[0]).toMatchObject({ id, state: 'waiting', file: original })
+  await store.start()
   expect(store.items[0]).toMatchObject({ id, state: 'succeeded' })
   uuid.mockRestore()
+})
+it('should_preserve_selection_order_when_tail_uuid_generation_fails', async () => {
+  const generate = crypto.randomUUID.bind(crypto)
+  vi.spyOn(crypto, 'randomUUID')
+    .mockImplementationOnce(generate)
+    .mockImplementationOnce(generate)
+    .mockImplementationOnce(() => {
+      throw Error()
+    })
+  store.addFiles([file('a.mp3'), file('b.mp3'), file('c.mp3')])
+  await store.retryCurrent()
+  expect(importTrack).not.toHaveBeenCalled()
+  await store.start()
+  expect(importTrack.mock.calls.map(([payload]) => payload.file.name)).toEqual([
+    'a.mp3',
+    'b.mp3',
+    'c.mp3',
+  ])
 })
 it('should_allow_removing_unsent_blocker_and_reject_actions_without_admin', async () => {
   vi.spyOn(crypto, 'randomUUID').mockImplementationOnce(() => {
