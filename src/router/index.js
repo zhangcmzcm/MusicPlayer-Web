@@ -11,6 +11,16 @@ export function createAppRouter(auth) {
         meta: { requiresAuth: true },
         children: [
           {
+            path: 'admin/tracks/import',
+            name: 'track-import',
+            component: () => import('../views/management/TrackImportView.vue'),
+            meta: {
+              requiresAuth: true,
+              roles: ['ADMIN'],
+              activeNavigation: 'track-management',
+            },
+          },
+          {
             path: 'admin/tracks',
             name: 'track-management',
             component: () =>

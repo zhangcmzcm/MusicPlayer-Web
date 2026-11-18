@@ -30,8 +30,8 @@ async function layout(role = 'USER', withSidebar = true) {
         },
       },
       {
-        path: 'admin',
-        name: 'test-management',
+        path: 'admin/tracks',
+        name: 'track-management',
         component: { template: '<p>管理测试</p>' },
         meta: {
           roles: ['ADMIN'],
@@ -42,6 +42,12 @@ async function layout(role = 'USER', withSidebar = true) {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [{ path: '/', component: BusinessLayout, children }],
+  })
+  router.addRoute({
+    path: '/admin/tracks/import',
+    name: 'track-import',
+    component: BusinessLayout,
+    meta: { activeNavigation: 'track-management' },
   })
   await router.push('/')
   const wrapper = mount(
@@ -54,6 +60,26 @@ async function layout(role = 'USER', withSidebar = true) {
   await flushPromises()
   return { wrapper, router, auth }
 }
+it('should_keep_management_selected_and_restore_context_in_both_navigation_locations', async () => {
+  const { wrapper, router } = await layout('ADMIN')
+  await router.push(
+    '/admin/tracks/import?status=DRAFT&page=2&size=50&sort=id,asc&q=林间',
+  )
+  await flushPromises()
+  const active = wrapper.get('aside a[aria-current=page]')
+  expect(active.text()).toBe('歌曲管理')
+  expect(active.attributes('href')).toContain('page=2')
+  await wrapper.get('button[aria-label="打开侧边导航"]').trigger('click')
+  await flushPromises()
+  const mobile = document.querySelector(
+    'nav[aria-label="手机侧边导航"] a[aria-current=page]',
+  )
+  expect(mobile.textContent).toBe('歌曲管理')
+  expect(mobile.getAttribute('href')).toBe(active.attributes('href'))
+  mobile.click()
+  await flushPromises()
+  expect(router.currentRoute.value.query.page).toBe('2')
+})
 it.each(['USER', 'ADMIN'])(
   'should_only_show_management_for_current_ADMIN_role_%s',
   async (role) => {

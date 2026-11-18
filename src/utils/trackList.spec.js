@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_MANAGEMENT_QUERY,
+  managementReturnTarget,
   formatTrackStatus,
   formatDuration,
   parseManagementQuery,
@@ -11,6 +12,32 @@ import {
 } from './trackList.js'
 
 describe('management queries', () => {
+  it('should_restore_five_fields_or_defaults_and_reset_only_draft_filters', () => {
+    const query = {
+      q: ' 林间 ',
+      status: 'PUBLISHED',
+      page: '2',
+      size: '50',
+      sort: 'title,asc',
+    }
+    expect(managementReturnTarget(query)).toEqual({
+      name: 'track-management',
+      query,
+    })
+    expect(managementReturnTarget(query, { drafts: true }).query).toEqual({
+      status: 'DRAFT',
+      size: '50',
+      sort: 'title,asc',
+    })
+    expect(managementReturnTarget({ page: '-1' })).toEqual({
+      name: 'track-management',
+      query: {},
+    })
+    expect(managementReturnTarget({})).toEqual({
+      name: 'track-management',
+      query: {},
+    })
+  })
   it('should_parse_and_serialize_management_status', () => {
     expect(parseManagementQuery({})).toEqual({
       query: DEFAULT_MANAGEMENT_QUERY,

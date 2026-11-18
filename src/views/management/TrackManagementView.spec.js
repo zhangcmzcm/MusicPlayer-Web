@@ -41,6 +41,11 @@ async function view(path = '/admin/tracks') {
     history: createMemoryHistory(),
     routes: [
       {
+        path: '/admin/tracks/import',
+        name: 'track-import',
+        component: { template: '<h1>批量导入</h1>' },
+      },
+      {
         path: '/admin/tracks',
         name: 'track-management',
         component: TrackManagementView,
@@ -56,6 +61,23 @@ async function view(path = '/admin/tracks') {
   await flushPromises()
   return { wrapper, router }
 }
+it('should_open_import_with_all_five_submitted_query_fields', async () => {
+  const { wrapper, router } = await view(
+    '/admin/tracks?q=%20林间%20&status=ARCHIVED&page=2&size=50&sort=id,asc',
+  )
+  await wrapper.get('a.upload-entry').trigger('click')
+  await flushPromises()
+  expect(router.currentRoute.value).toMatchObject({
+    name: 'track-import',
+    query: {
+      q: ' 林间 ',
+      status: 'ARCHIVED',
+      page: '2',
+      size: '50',
+      sort: 'id,asc',
+    },
+  })
+})
 it('should_render_a_real_library_and_focus_its_heading', async () => {
   const { wrapper } = await view()
   expect(wrapper.get('h1').text()).toBe('歌曲管理')

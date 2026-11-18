@@ -23,6 +23,12 @@ async function setup(path = '/login') {
     history: createMemoryHistory(),
     routes: [
       {
+        path: '/admin/tracks/import',
+        name: 'track-import',
+        component: { template: '<h1>批量导入</h1>' },
+        meta: { requiresAuth: true, roles: ['ADMIN'] },
+      },
+      {
         path: '/admin/tracks',
         name: 'track-management',
         component: { template: '<h1>歌曲管理</h1>' },
@@ -92,6 +98,22 @@ async function fill(
   await wrapper.get('[data-testid="email-input"]').setValue(email)
   await wrapper.get('[data-testid="password-input"]').setValue(password)
 }
+it.each(['ADMIN', 'USER'])(
+  'should_finish_import_login_redirect_for_%s',
+  async (role) => {
+    vi.mocked(api.login).mockResolvedValue(authenticated(role))
+    const { wrapper, router, auth } = await setup(
+      '/login?redirect=/admin/tracks/import%3Fsize%3D50',
+    )
+    router.beforeEach(createAuthGuard(auth))
+    await fill(wrapper)
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(router.currentRoute.value.name).toBe(
+      role === 'ADMIN' ? 'track-import' : 'library',
+    )
+  },
+)
 it('should_validate_empty_and_short_password_without_request', async () => {
   const { wrapper } = await setup()
   await wrapper.get('form').trigger('submit')

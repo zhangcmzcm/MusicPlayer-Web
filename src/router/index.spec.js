@@ -13,6 +13,31 @@ vi.mock('../api/tracks.js', () => ({
   getTrackCover: vi.fn(),
 }))
 
+it.each(['ADMIN', 'USER', null])(
+  'should_protect_initial_import_route_for_%s',
+  async (role) => {
+    const router = createAppRouter({
+      isAuthenticated: Boolean(role),
+      session: role ? authentication(role) : null,
+      clearSession: vi.fn(),
+    })
+    await router.push('/admin/tracks/import?status=DRAFT&size=50')
+    expect(router.currentRoute.value.name).toBe(
+      role === 'ADMIN' ? 'track-import' : role ? 'library' : 'login',
+    )
+    if (!role)
+      expect(router.currentRoute.value.query.redirect).toBe(
+        '/admin/tracks/import?status=DRAFT&size=50',
+      )
+    if (role === 'ADMIN')
+      expect(router.currentRoute.value.meta).toMatchObject({
+        requiresAuth: true,
+        roles: ['ADMIN'],
+        activeNavigation: 'track-management',
+      })
+  },
+)
+
 it.each(['ADMIN', 'USER'])(
   'should_mount_real_navigation_for_%s',
   async (role) => {

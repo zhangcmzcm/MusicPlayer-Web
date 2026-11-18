@@ -112,6 +112,12 @@ watch(
       <p v-if="page && !forbidden" class="library-count">
         共 {{ page.totalElements }} 首
       </p>
+      <RouterLink
+        v-if="!forbidden"
+        class="upload-entry"
+        :to="{ name: 'track-import', query: toManagementQuery(displayQuery) }"
+        >上传歌曲</RouterLink
+      >
       <LibraryToolbar
         v-if="!forbidden"
         :query="displayQuery"
@@ -205,6 +211,15 @@ h1:focus-visible {
   color: var(--ink-muted);
   font-size: 12px;
   margin: 0;
+}
+.upload-entry {
+  border: 1px solid var(--green-action);
+  background: var(--green-action);
+  color: white;
+  padding: 8px 15px;
+  border-radius: 4px;
+  font-size: 13px;
+  text-decoration: none;
 }
 .status-filter {
   margin: 0 0 24px;

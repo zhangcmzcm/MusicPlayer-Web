@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth.js'
+import { managementReturnTarget } from '../../utils/trackList.js'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -28,6 +29,12 @@ const sideLinks = computed(() =>
   links.value.filter((record) => record.meta.navigation.section === 'sidebar'),
 )
 const username = computed(() => auth.session?.user.username || '用户')
+const activeName = computed(() => route.meta.activeNavigation || route.name)
+function navigationTarget(link) {
+  return link.name === 'track-management' && route.name === 'track-import'
+    ? managementReturnTarget(route.query)
+    : { name: link.name }
+}
 watch(
   () => route.fullPath,
   () => {
@@ -84,7 +91,9 @@ function restoreToggleFocus() {
           <RouterLink
             v-for="link in sideLinks"
             :key="link.name"
-            :to="{ name: link.name }"
+            :to="navigationTarget(link)"
+            :class="{ 'navigation-active': activeName === link.name }"
+            :aria-current="activeName === link.name ? 'page' : undefined"
             >{{ link.meta.navigation.label }}</RouterLink
           >
         </nav>
@@ -109,7 +118,9 @@ function restoreToggleFocus() {
         <RouterLink
           v-for="link in sideLinks"
           :key="link.name"
-          :to="{ name: link.name }"
+          :to="navigationTarget(link)"
+          :class="{ 'navigation-active': activeName === link.name }"
+          :aria-current="activeName === link.name ? 'page' : undefined"
           >{{ link.meta.navigation.label }}</RouterLink
         >
       </nav>
@@ -239,8 +250,8 @@ function restoreToggleFocus() {
 }
 .business-sidebar a:hover,
 .drawer-navigation a:hover,
-.business-sidebar .router-link-exact-active,
-.drawer-navigation .router-link-exact-active {
+.business-sidebar .navigation-active,
+.drawer-navigation .navigation-active {
   background: #dae7c9;
 }
 .business-main {

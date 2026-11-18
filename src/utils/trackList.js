@@ -105,6 +105,14 @@ export function toManagementQuery(query) {
   return result
 }
 
+export function managementReturnTarget(routeQuery, { drafts = false } = {}) {
+  const query = {
+    ...(parseManagementQuery(routeQuery).query || DEFAULT_MANAGEMENT_QUERY),
+  }
+  if (drafts) Object.assign(query, { q: '', page: 0, status: 'DRAFT' })
+  return { name: 'track-management', query: toManagementQuery(query) }
+}
+
 export function formatDuration(milliseconds) {
   if (typeof milliseconds !== 'string' || !/^\d+$/.test(milliseconds))
     return '--:--'
