@@ -3,6 +3,18 @@ import { ApiError, getErrorMessage } from './errors.js'
 import { reportError } from './logger.js'
 
 describe('safe errors', () => {
+  it.each([
+    ['IMPORT_CONFLICT', '冲突'],
+    ['IMPORT_IN_PROGRESS', '仍在处理'],
+    ['UPLOAD_TOO_LARGE', '大小'],
+    ['UNSUPPORTED_AUDIO_FORMAT', 'MP3'],
+    ['AUDIO_METADATA_INVALID', '损坏'],
+    ['TRACK_IMPORT_RATE_LIMITED', '频繁'],
+    ['MEDIA_IMPORT_STORE_UNAVAILABLE', '重试核对'],
+    ['MEDIA_OBJECT_CLEANUP_FAILED', '重试核对'],
+  ])('should_explain_import_error_%s', (code, message) => {
+    expect(getErrorMessage(new ApiError({ code }))).toContain(message)
+  })
   it('should_explain_invalid_management_query', () => {
     expect(
       getErrorMessage(new ApiError({ code: 'INVALID_MANAGEMENT_QUERY' })),

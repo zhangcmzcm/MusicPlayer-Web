@@ -66,3 +66,48 @@ export function trackPageText(overrides = {}) {
     '"$1":$2',
   )
 }
+
+export function importResponse(overrides = {}) {
+  return {
+    importId: '18',
+    uploadId: '36bd81f4-2fa2-4d1c-a7c3-b6423690a3fa',
+    status: 'READY',
+    track: {
+      id: '42',
+      title: '雨后的清晨',
+      artistName: '林间来信',
+      albumName: null,
+      durationMs: '215430',
+      trackNumber: 1,
+      discNumber: 1,
+      status: 'DRAFT',
+      audio: {
+        id: '51',
+        contentType: 'audio/mpeg',
+        sizeBytes: '13',
+        sha256: 'a'.repeat(64),
+      },
+      cover: null,
+    },
+    metadataWarnings: [],
+    ...overrides,
+  }
+}
+
+export function importResponseText(overrides = {}) {
+  return JSON.stringify(importResponse(overrides)).replace(
+    /"(importId|id|durationMs|sizeBytes)":"(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)"/g,
+    '"$1":$2',
+  )
+}
+
+export function importResult(overrides = {}) {
+  return {
+    importId: '18',
+    uploadId: '36bd81f4-2fa2-4d1c-a7c3-b6423690a3fa',
+    status: 'READY',
+    track: { id: '42', title: '雨后的清晨', artistName: '林间来信' },
+    warnings: [],
+    ...overrides,
+  }
+}

@@ -1,4 +1,12 @@
 export const errorMessages = {
+  IMPORT_CONFLICT: '导入标识发生冲突，请检查本项后继续。',
+  IMPORT_IN_PROGRESS: '歌曲仍在处理，请稍后重试核对结果。',
+  UPLOAD_TOO_LARGE: '文件超过上传大小限制，请检查后重试。',
+  UNSUPPORTED_AUDIO_FORMAT: '音频格式不受支持，请选择 MP3 或 FLAC。',
+  AUDIO_METADATA_INVALID: '音频文件损坏或缺少有效时长，请检查文件。',
+  TRACK_IMPORT_RATE_LIMITED: '歌曲导入过于频繁，请稍后手动重试。',
+  MEDIA_IMPORT_STORE_UNAVAILABLE: '导入服务暂时不可用，请稍后重试核对结果。',
+  MEDIA_OBJECT_CLEANUP_FAILED: '媒体清理暂时异常，请稍后重试核对结果。',
   INVALID_MANAGEMENT_QUERY: '歌曲管理查询条件无效，请恢复默认条件。',
   INVALID_LIBRARY_QUERY: '曲库查询条件无效，请恢复默认条件。',
   TRACK_STORE_UNAVAILABLE: '曲库暂时无法读取，请稍后重试。',

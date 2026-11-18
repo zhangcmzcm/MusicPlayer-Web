@@ -1,50 +1,12 @@
-import { isLosslessNumber, parse, splitNumber } from 'lossless-json'
 import { http } from './http.js'
 import { ApiError } from '../utils/errors.js'
-import { reportError } from '../utils/logger.js'
-
-const MAX_LONG = 9223372036854775807n
-const MIN_LONG = -9223372036854775808n
-
-function invalidResponse() {
-  const error = new ApiError({ code: 'INVALID_RESPONSE' })
-  reportError(error)
-  return error
-}
-
-function longString(value, minimum = 0n, maximum = MAX_LONG) {
-  let raw
-  if (isLosslessNumber(value)) raw = value.toString()
-  else if (typeof value === 'number' && Number.isSafeInteger(value))
-    raw = String(value)
-  else throw invalidResponse()
-  const { sign, digits, exponent } = splitNumber(raw)
-  if (exponent > 18 || exponent < digits.length - 1) throw invalidResponse()
-  const integer = BigInt(
-    sign + digits + '0'.repeat(exponent + 1 - digits.length),
-  )
-  if (integer < minimum || integer > maximum) throw invalidResponse()
-  return integer.toString()
-}
-
-function optionalLong(value) {
-  if (value === null || value === undefined) return null
-  try {
-    return longString(value, MIN_LONG)
-  } catch {
-    return null
-  }
-}
-
-function parseTrackJson(data, _headers, status) {
-  if (typeof data !== 'string' || data === '') return data
-  try {
-    return parse(data)
-  } catch {
-    if (status >= 400) return {}
-    return null
-  }
-}
+import {
+  MAX_LONG,
+  invalidResponse,
+  longString,
+  optionalLong,
+  parseTrackJson,
+} from './trackResponse.js'
 
 function displayText(value, fallback) {
   return typeof value === 'string' && value.length ? value : fallback
