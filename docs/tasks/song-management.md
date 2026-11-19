@@ -1,6 +1,6 @@
 # 歌曲管理任务书
 
-更新日期为 2026-11-18。本文记录管理员歌曲管理的整体流程、接口对应、已确认决定与分步交付边界。MGMT-01 已完成实现与独立审核，MGMT-02 设计与计划均已通过，当前实现和自验完成，等待独立审核。
+更新日期为 2026-11-18。本文记录管理员歌曲管理的整体流程、接口对应、已确认决定与分步交付边界。MGMT-01 已完成实现与独立审核，MGMT-02 设计与计划均已通过，当前实现、验证和第 1 轮独立审核均已完成，结论 accepted。
 
 ## 目标与页面组织
 
@@ -142,7 +142,7 @@
 
 各切片分别形成设计、计划、实现、验证和独立审核。第一步为 [MGMT-01 管理列表设计](../superpowers/specs/2026-11-16-song-management-list-design.md)。整体流程确认后的其他切片在进入各自计划时细化具体界面、字段消费及恢复规则。
 
-MGMT-02 的[批量导入页书面设计](../superpowers/specs/2026-11-18-track-batch-import-design.md)已获人类通过，对应[实施计划](../superpowers/plans/2026-11-18-track-batch-import.md)已通过并指定当前会话主 Agent 实施。当前实现与自验完成，见[功能及验证](../features/track-import.md)，等待独立审核。
+MGMT-02 的[批量导入页书面设计](../superpowers/specs/2026-11-18-track-batch-import-design.md)已获人类通过，对应[实施计划](../superpowers/plans/2026-11-18-track-batch-import.md)已通过并指定当前会话主 Agent 实施。当前实现与验证完成，独立审核第 1 轮 accepted，见[功能及验证](../features/track-import.md)与[审核归档](../reviews/2026-11-18-track-import-review.md)。
 
 ## 验收与当前状态
 
@@ -152,4 +152,4 @@ MGMT-02 的[批量导入页书面设计](../superpowers/specs/2026-11-18-track-b
 
 本轮已有 ADMIN 权限、编辑范围、批量方式、页面组织、列表规则、跨页暂停、编辑恢复和切片组织的人类确认。2026-11-17 人类通过书面方案并授权编写 [MGMT-01 实施计划](../superpowers/plans/2026-11-17-track-management-list.md)，人类随后通过计划并指定当前会话主 Agent 实施。MGMT-01 已完成实现、验证和独立审核。546 条单测、112 条端到端通过，逐文件覆盖率达标，Claude Code 第 1 轮实质审核结论为 accepted，其他切片保持待交付。[功能与验证](../features/track-management.md)及[独立审核报告](../reviews/2026-11-17-track-management-review.md)登记完整证据。
 
-2026-11-18 MGMT-02 的入口与队列、进度与恢复、职责与验证及提交 `c1b4093` 的书面设计均获人类确认，实施计划提交 `a7fd1dd` 随后获人类通过，指定当前会话主 Agent 实施。代码自验现为 669 条单测与 133 条端到端通过，逐文件覆盖率达标；独立审核尚未开始（0 轮），此状态不表示 accepted。
+2026-11-18 MGMT-02 的入口与队列、进度与恢复、职责与验证及提交 `c1b4093` 的书面设计均获人类确认，实施计划提交 `a7fd1dd` 随后获人类通过，指定当前会话主 Agent 实施。代码自验现为 669 条单测与 133 条端到端通过，逐文件覆盖率达标；Claude Code 第 1 轮独立审核 accepted，无阻断项，审核方独立重跑全部必要验证通过。两条非阻断建议已逐项复核，见[审核归档](../reviews/2026-11-18-track-import-review.md)。其他切片继续等待人类指派。

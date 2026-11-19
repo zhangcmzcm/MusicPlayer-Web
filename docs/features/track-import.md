@@ -117,7 +117,7 @@ Pinia 持有内存批次。成功、明确失败或清理会话时释放 File；
 | src/views/management/TrackManagementView.vue   | 98.14% | 90%              |
 | src/router/index.js                            | 100%   | 不适用（0 分支） |
 
-独立 Claude 审核尚未开始，当前轮次 0，自验通过不等于 accepted。
+独立 Claude Code 第 1 轮实质审核已 accepted，无阻断项；审核方独立重跑四项必要验证，669 单测和 133 e2e 均通过。实际运行器 2.1.325、模型 mimo-v2.6-pro。两条非阻断建议的逐项复核与处置、完整原文见[独立审核归档](../reviews/2026-11-18-track-import-review.md)。业务实现保持送审版本，当前切片完成，等待人类指派下一项。
 
 ## 变更文件
 
@@ -134,6 +134,6 @@ Pinia 持有内存批次。成功、明确失败或清理会话时释放 File；
 - `src/utils/trackList.js`、同目录 spec：管理返回目标。
 - `src/test/factories.js`：独立原始响应、精确 JSON 和结果工厂。
 - `e2e/track-import.spec.js`：21 项浏览器流程与视觉检查。
-- 本功能文档、管理任务书与实施计划：交付进度、验证及审核索引。
+- 本功能文档、管理任务书与实施计划、审核请求及原文归档：交付进度、验证及审核索引。
 
 送审前工作树另有人工维护的 `docs/api/track/list-tracks.md` 修改与 `docs/api/favorite/` 未跟踪文档，均保持原样且未纳入本切片提交。
